@@ -39,27 +39,7 @@ def save_user(**values):
 MP3_BITRATES = ["128", "192", "256", "320", "V0"]
 FLAC_BITS = [16, 24]
 EXPORT_DEFAULTS = {"mp3_bitrate": "320", "flac_bits": 24, "artist": "", "album": "", "genre": "", "year": "",
-                   "comment": "YuE2 Studio", "artist_on_cover": True}
-
-
-def export_settings():
-    data = {**EXPORT_DEFAULTS, **(load_user().get("export") or {})}
-    if str(data["mp3_bitrate"]) not in MP3_BITRATES:
-        data["mp3_bitrate"] = EXPORT_DEFAULTS["mp3_bitrate"]
-    if int(data.get("flac_bits") or 24) not in FLAC_BITS:
-        data["flac_bits"] = 24
-    return data
-
-
-def save_export(**values):
-    save_user(export={**export_settings(), **values})
-
-
-# Export (Reiter „Einstellungen“): Qualität und Tags für gespeicherte MP3/FLAC
-MP3_BITRATES = ["128", "192", "256", "320", "V0"]
-FLAC_BITS = [16, 24]
-EXPORT_DEFAULTS = {"mp3_bitrate": "320", "flac_bits": 24, "artist": "", "album": "", "genre": "", "year": "",
-                   "comment": "YuE2 Studio", "artist_on_cover": True}
+                   "comment": "YuE2 Music Studio", "artist_on_cover": True}
 
 
 def export_settings():

@@ -1,4 +1,7 @@
-<h1 align="center"><img src="docs/logo.png" alt="YuE2 Studio" width="100%"></h1>
+<p align="center"><img src="docs/logo.png" alt="YuE2 Music Studio – Logo" width="280"></p>
+<h1 align="center">YuE2 Music Studio</h1>
+
+<p align="center"><sub>früher „YuE2 Studio“ · formerly “YuE2 Studio”</sub></p>
 
 Lokale Gradio-App für das KI-Musikmodell **YuE2** (`m-a-p/YuE2-3B`).
 Lyrics und Style-Prompt erzeugt ein lokales Ollama-Modell über einen Masterprompt. Beides lässt sich danach von Hand oder per KI korrigieren.
@@ -9,24 +12,24 @@ Quellen: [YuE2 Prompt-Guide (ComfyUI)](https://docs.comfy.org/tutorials/audio/yu
 
 ## Vorschau / Preview
 
-<p align="center"><img src="docs/vorschau.png" alt="YuE2 Studio – Oberfläche mit Idee, Feinschliff, Generieren und Speichern" width="900"></p>
+<p align="center"><img src="docs/vorschau.png" alt="YuE2 Music Studio – Oberfläche mit Idee, Feinschliff, Generieren und Speichern" width="900"></p>
 
 **Bibliothek / Library** – gespeicherte Songs mit FLUX.3-Covern, Details und Wiederverwenden:
 
-<p align="center"><img src="docs/vorschau2.png" alt="YuE2 Studio – Bibliothek mit Song-Kacheln, Covern und Detailkarte" width="900"></p>
+<p align="center"><img src="docs/vorschau2.png" alt="YuE2 Music Studio – Bibliothek mit Song-Kacheln, Covern und Detailkarte" width="900"></p>
 
 **Mashup** – zwei Songs, Ablauf von Song A, je Teil A (violett) oder B (cyan), Text über den Noten:
 
-<p align="center"><img src="docs/vorschau3.png" alt="YuE2 Studio – Mashup aus „Neon Rain Drive“ und „Letters to the Sea“ mit farbiger Ablaufleiste und Teil-Karten" width="900"></p>
+<p align="center"><img src="docs/vorschau3.png" alt="YuE2 Music Studio – Mashup aus „Neon Rain Drive“ und „Letters to the Sea“ mit farbiger Ablaufleiste und Teil-Karten" width="900"></p>
 
 **Einstellungen / Settings** – MP3/FLAC-Qualität und Tags; der Künstlername erscheint auf Wunsch auf dem FLUX-Cover:
 
 <table align="center"><tr>
-<td><img src="docs/vorschau4.png" alt="YuE2 Studio – Export-Einstellungen mit Künstler, Album, Genre und Jahr" width="440"></td>
+<td><img src="docs/vorschau4.png" alt="YuE2 Music Studio – Export-Einstellungen mit Künstler, Album, Genre und Jahr" width="440"></td>
 <td><img src="docs/cover_beispiel.jpg" alt="FLUX.3-Cover „Neon Rain Drive“ mit Künstlername „Luna Vale“" width="360"></td>
 </tr></table>
 
-<sub>Alle Songs, Künstler und Cover in den Vorschaubildern sind erfunden und mit YuE2 Studio erzeugt.</sub>
+<sub>Alle Songs, Künstler und Cover in den Vorschaubildern sind erfunden und mit YuE2 Music Studio erzeugt.</sub>
 
 ## Beispiel / Example
 
@@ -126,7 +129,7 @@ Wiederverwenden per Knopfdruck – die Werte landen im Studio, und die App wechs
 ## Cover (optional, FLUX.3 Image Klein)
 Auf Wunsch malt [FLUX.3 Image Klein](https://huggingface.co/black-forest-labs/flux-3-image-klein) ein Albumcover (512 × 512) mit dem **Songtitel als Schriftzug im Bild**. Ollama schreibt dafür aus Titel, Style, Songkonzept und Lyrics eine ausführliche Bildbeschreibung – mit dem offiziellen Prompt-Upsampler-Systemprompt von Black Forest Labs (`prompts/flux3_upsampler_t2i.md`). Das Cover wird als `<Name>.jpg` gespeichert, **in MP3 und FLAC eingebettet** (Audiodaten bleiben unverändert) und in der Info-TXT vermerkt. Erstellen lässt es sich beim Speichern (Checkbox) oder später in der Bibliothek (**„🎨 Cover erstellen“**, auch erneut mit neuem Motiv).
 
-FLUX.3 läuft komplett innerhalb von YuE2 Studio – in einer eigenen Umgebung `.venv-flux3` (diffusers), ohne ComfyUI. Die Funktion ist **optional** und wird separat installiert:
+FLUX.3 läuft komplett innerhalb von YuE2 Music Studio – in einer eigenen Umgebung `.venv-flux3` (diffusers), ohne ComfyUI. Die Funktion ist **optional** und wird separat installiert:
 ```powershell
 powershell -ExecutionPolicy Bypass -File install_cover.ps1
 ```
@@ -136,7 +139,7 @@ powershell -ExecutionPolicy Bypass -File install_cover.ps1
 - Ohne Installation sind die Cover-Knöpfe ausgegraut; alles andere funktioniert wie gewohnt.
 - Lizenz des Modells: **FLUX Kommunity License** – kostenlos für private Nutzung und kleine Unternehmen, Details auf der Modellseite.
 
-> **English:** The new **Library** tab shows all saved songs as tiles (cover, title, length, genre, BPM) with search and sorting. Clicking a tile opens a detail card with player and – under *Details* – concept, idea, style and lyrics, read from the song's info TXT. **Reuse** buttons copy everything (incl. seed and, for remakes, the original melody) or just idea, style or lyrics back into the studio. Optionally, **FLUX.3 Image Klein** creates a 512 × 512 album cover with the song title rendered into the artwork; Ollama writes the image prompt using BFL's official upsampler system prompt. The cover is saved as `<Name>.jpg`, embedded into MP3/FLAC and noted in the info TXT. FLUX runs fully inside YuE2 Studio (own environment, no ComfyUI) and is installed separately with `install_cover.ps1` (~15.5 GB download from `unsloth/flux-3-image-klein`, FLUX Kommunity License).
+> **English:** The new **Library** tab shows all saved songs as tiles (cover, title, length, genre, BPM) with search and sorting. Clicking a tile opens a detail card with player and – under *Details* – concept, idea, style and lyrics, read from the song's info TXT. **Reuse** buttons copy everything (incl. seed and, for remakes, the original melody) or just idea, style or lyrics back into the studio. Optionally, **FLUX.3 Image Klein** creates a 512 × 512 album cover with the song title rendered into the artwork; Ollama writes the image prompt using BFL's official upsampler system prompt. The cover is saved as `<Name>.jpg`, embedded into MP3/FLAC and noted in the info TXT. FLUX runs fully inside YuE2 Music Studio (own environment, no ComfyUI) and is installed separately with `install_cover.ps1` (~15.5 GB download from `unsloth/flux-3-image-klein`, FLUX Kommunity License).
 
 ## Masterprompts
 Die Prompts liegen in `prompts/` und lassen sich anpassen:
@@ -174,7 +177,7 @@ Kernregeln nach dem YuE2-Guide: Der **Style** ist eine kommagetrennte Liste in d
 ## AMD Radeon
 Die App läuft auch auf AMD-Grafikkarten. Grundlage ist AMDs offizielles PyTorch für Windows (ROCm 7.2.1).
 
-> ⚠️ **Status:** Der AMD-Weg ist auf NVIDIA-Hardware so weit wie möglich nachgebildet und geprüft (Wheel-Adressen, Paketauflösung, Installer-Probelauf, die AMD-Code-Pfade der App). **Auf einer echten AMD-Karte wurde er noch nicht getestet.** Rückmeldungen gerne als [Issue](https://github.com/sunnyfunny1977-alt/yue2-studio/issues).
+> ⚠️ **Status:** Der AMD-Weg ist auf NVIDIA-Hardware so weit wie möglich nachgebildet und geprüft (Wheel-Adressen, Paketauflösung, Installer-Probelauf, die AMD-Code-Pfade der App). **Auf einer echten AMD-Karte wurde er noch nicht getestet.** Rückmeldungen gerne als [Issue](https://github.com/sunnyfunny1977-alt/yue2-music-studio/issues).
 
 - **Unterstützte Karten** (laut AMD): Radeon RX 7900 XTX/XT, RX 7700, RX 9060 XT, RX 9070/9070 XT, Radeon AI PRO R9700, Radeon PRO W7800/W7900 (gfx1100/1101/1200/1201).
 - **Voraussetzungen:** Windows 11, Treiber Adrenalin 26.2.2 oder neuer, Python 3.12 (installiert uv automatisch).

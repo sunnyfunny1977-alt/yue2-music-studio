@@ -1,4 +1,4 @@
-# YuE2 Studio - gemeinsame Funktionen fuer install_nvidia.ps1 und install_amd.ps1 (per Dot-Sourcing geladen).
+# YuE2 Music Studio - gemeinsame Funktionen fuer install_nvidia.ps1 und install_amd.ps1 (per Dot-Sourcing geladen).
 # Hinweis: Diese Datei ist bewusst reines ASCII (Windows PowerShell 5.1 liest UTF-8 ohne BOM als ANSI).
 
 $YuETag = "yue2-v0.1.6"

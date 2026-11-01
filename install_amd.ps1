@@ -1,4 +1,4 @@
-# YuE2 Studio - Installation fuer AMD-Radeon-Grafikkarten (Windows 11, ROCm 7.2.1)
+# YuE2 Music Studio - Installation fuer AMD-Radeon-Grafikkarten (Windows 11, ROCm 7.2.1)
 # Aufruf:  powershell -ExecutionPolicy Bypass -File install_amd.ps1  [-SkipSheetSage] [-SkipModels] [-DryRun]
 #
 # Voraussetzungen laut AMD (ROCm 7.2.1 fuer Windows):
@@ -29,7 +29,7 @@ $YuEDeps = @("transformers==4.57.6", "huggingface-hub==0.36.2", "safetensors==0.
              "numpy==2.2.6", "soundfile==0.13.1", "accelerate==1.13.0")
 $CpuIndex = "https://download.pytorch.org/whl/cpu"
 
-Write-Host "YuE2 Studio - Installer fuer AMD Radeon (ROCm 7.2.1)" -ForegroundColor Green
+Write-Host "YuE2 Music Studio - Installer fuer AMD Radeon (ROCm 7.2.1)" -ForegroundColor Green
 Test-Prerequisites
 
 # ---------------------------------------------------------------- System pruefen

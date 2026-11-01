@@ -8,7 +8,7 @@ from settings import CONFIG
 
 PROVIDER = "LRCLIB"
 API = CONFIG.get("lyrics_api_url", "https://lrclib.net/api").rstrip("/")
-USER_AGENT = "YuE2-Studio (https://github.com/sunnyfunny1977-alt/yue2-studio)"
+USER_AGENT = "YuE2-Music-Studio (https://github.com/sunnyfunny1977-alt/yue2-music-studio)"
 _LRC_TIME = re.compile(r"^\s*(\[\d{1,2}:\d{2}(?:[.:]\d{1,3})?\])+\s*")
 _NORMALIZE = re.compile(r"[\W_]+", re.UNICODE)
 

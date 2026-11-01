@@ -1,4 +1,4 @@
-# YuE2 Studio - optionale Cover-Funktion: FLUX.3 Image Klein (eigene Umgebung .venv-flux3 + Modell)
+# YuE2 Music Studio - optionale Cover-Funktion: FLUX.3 Image Klein (eigene Umgebung .venv-flux3 + Modell)
 # Aufruf:  powershell -ExecutionPolicy Bypass -File install_cover.ps1  [-Variant fp8r|bf16] [-SkipModel] [-DryRun]
 #   fp8r (Standard): Transformer 6.3 GB, laeuft auf jeder Karte (ohne fp8-Kerne wird pro Schritt nach bf16 gerechnet)
 #   bf16:            Transformer 11.1 GB, etwas schneller auf Karten ohne fp8-Unterstuetzung, braucht mehr VRAM
@@ -30,9 +30,9 @@ $RocmTorch = @(
     "$RocmRel/torchvision-0.24.1%2Brocm7.2.1-cp312-cp312-win_amd64.whl"
 )
 
-Write-Host "YuE2 Studio - Cover-Funktion (FLUX.3 Image Klein) installieren" -ForegroundColor Green
+Write-Host "YuE2 Music Studio - Cover-Funktion (FLUX.3 Image Klein) installieren" -ForegroundColor Green
 if (-not (Test-Path $Py)) {
-    Write-Warning "YuE2 Studio ist noch nicht installiert. Bitte zuerst install.ps1 ausfuehren."
+    Write-Warning "YuE2 Music Studio ist noch nicht installiert. Bitte zuerst install.ps1 ausfuehren."
     if (-not $DryRun) { exit 1 }
 }
 Need uv "Installieren: winget install astral-sh.uv"
@@ -73,4 +73,4 @@ if (-not $SkipModel) {
 # ---------------------------------------------------------------- Selbsttest
 Step "FLUX.3-Selbsttest (kleines Bild, 4 Schritte)"
 Run $FPy flux_worker.py --selftest $ModelDir $Variant
-Write-Host "`nFertig. Die Cover-Funktion erscheint nach dem Neustart von YuE2 Studio (start.bat)." -ForegroundColor Green
+Write-Host "`nFertig. Die Cover-Funktion erscheint nach dem Neustart von YuE2 Music Studio (start.bat)." -ForegroundColor Green

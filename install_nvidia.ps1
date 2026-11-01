@@ -1,4 +1,4 @@
-# YuE2 Studio - Installation fuer NVIDIA-Grafikkarten (Windows, CUDA 12.8, z. B. RTX 30/40/50)
+# YuE2 Music Studio - Installation fuer NVIDIA-Grafikkarten (Windows, CUDA 12.8, z. B. RTX 30/40/50)
 # Aufruf:  powershell -ExecutionPolicy Bypass -File install_nvidia.ps1  [-SkipSheetSage] [-SkipModels] [-DryRun]
 param([switch]$SkipSheetSage, [switch]$SkipModels, [switch]$DryRun)
 $ErrorActionPreference = "Stop"
@@ -7,7 +7,7 @@ Set-Location $PSScriptRoot
 
 $Cu128 = "https://download.pytorch.org/whl/cu128"
 
-Write-Host "YuE2 Studio - Installer fuer NVIDIA (CUDA 12.8)" -ForegroundColor Green
+Write-Host "YuE2 Music Studio - Installer fuer NVIDIA (CUDA 12.8)" -ForegroundColor Green
 Test-Prerequisites
 
 # ---------------------------------------------------------------- YuE2 + App (Python 3.12)

@@ -22,7 +22,7 @@ STRINGS = {
     "mon.cpu": ("CPU", "CPU"),
     "mon.ram": ("RAM", "RAM"),
     "chip.lowvram": ("Sparmodus (experimentell)", "Low-VRAM mode (experimental)"),
-    "modal.title": ("Willkommen bei YuE2 Studio", "Welcome to YuE2 Studio"),
+    "modal.title": ("Willkommen bei YuE2 Music Studio", "Welcome to YuE2 Music Studio"),
     "modal.sub": ("Bitte wähle die Sprache der Oberfläche. Du kannst sie jederzeit oben rechts ändern.",
                   "Please choose the interface language. You can change it any time in the top right corner."),
 

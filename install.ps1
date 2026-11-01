@@ -1,4 +1,4 @@
-# YuE2 Studio - Installation (Windows). Erkennt die Grafikkarte und startet den passenden Installer:
+# YuE2 Music Studio - Installation (Windows). Erkennt die Grafikkarte und startet den passenden Installer:
 #   NVIDIA -> install_nvidia.ps1 (CUDA 12.8)      AMD Radeon -> install_amd.ps1 (ROCm 7.2.1)
 # Aufruf:  powershell -ExecutionPolicy Bypass -File install.ps1  [-Vendor nvidia|amd] [-SkipSheetSage] [-SkipModels] [-DryRun]
 param([ValidateSet("auto", "nvidia", "amd")][string]$Vendor = "auto",

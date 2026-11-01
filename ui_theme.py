@@ -93,16 +93,8 @@ footer { display: none !important; }
 .hero::after { content: ""; position: absolute; inset: -40% -10% auto auto; width: 420px; height: 420px;
   background: radial-gradient(circle, rgba(34,211,238,.18), transparent 65%); pointer-events: none; }
 .hero-left { display: flex; align-items: center; gap: 18px; z-index: 1; flex: 1 1 380px; min-width: 0; }
-.logo { width: 58px; height: 58px; border-radius: 18px; background: """ + GRADIENT + """;
-  display: flex; align-items: flex-end; justify-content: center; gap: 4px; padding: 13px 0;
-  box-shadow: 0 10px 30px -8px rgba(124,58,237,.8); }
-.logo i { display: block; width: 5px; border-radius: 3px; background: rgba(255,255,255,.95);
-  animation: eq 1.1s ease-in-out infinite; }
-.logo i:nth-child(1) { height: 40%; animation-delay: -.2s } .logo i:nth-child(2) { height: 90%; animation-delay: -.5s }
-.logo i:nth-child(3) { height: 60%; animation-delay: -.8s } .logo i:nth-child(4) { height: 100%; animation-delay: -.3s }
-.logo i:nth-child(5) { height: 50%; animation-delay: -.65s }
-@keyframes eq { 0%,100% { transform: scaleY(.45) } 50% { transform: scaleY(1) } }
-.logo i { transform-origin: bottom; }
+.logo { display: block; width: 120px; height: 120px; flex: 0 0 auto; border-radius: 22%;
+  box-shadow: 0 12px 34px -10px rgba(124,58,237,.85), 0 0 26px -12px rgba(34,211,238,.7); }
 .hero h1 { margin: 0 !important; font-size: 30px !important; font-weight: 800 !important; letter-spacing: -.02em;
   line-height: 1.1 !important; color: #fff !important; }
 .hero h1 span { background: linear-gradient(90deg, #c4b5fd, #67e8f9); -webkit-background-clip: text;
@@ -368,13 +360,14 @@ footer { display: none !important; }
 #lang-modal .modal-card { width: 100%; max-width: 500px; flex-grow: 0 !important; text-align: center;
   background: rgba(16,16,30,.96) !important; border: 1px solid rgba(255,255,255,.10) !important; border-radius: 26px !important;
   padding: 30px 28px 28px !important; box-shadow: 0 30px 90px -20px rgba(124,58,237,.55); }
-.modal-head .logo { margin: 0 auto 16px; }
+.modal-head .logo { width: 136px; height: 136px; margin: 0 auto 16px; }
 .modal-head h2 { margin: 0 !important; font-size: 24px !important; font-weight: 800 !important; color: #fff !important; }
 .modal-head p { margin: 6px 0 10px !important; color: #b9b7da !important; }
 .modal-head .modal-en { margin-top: 14px !important; font-size: 19px !important; color: #c4b5fd !important; }
 .lang-btn { min-height: 62px; font-size: 17px !important; font-weight: 700 !important; }
 @media (max-width: 900px) { #lang-switch { position: static !important; margin: 8px 0 0 auto; } }
-@media (max-width: 900px) { .gradio-container { padding: 14px !important; } .hero h1 { font-size: 24px !important; } }
+@media (max-width: 900px) { .gradio-container { padding: 14px !important; } .hero h1 { font-size: 24px !important; }
+  .hero .logo { width: 76px; height: 76px; } }
 """
 
 WAVEFORM = gr.WaveformOptions(waveform_color="#4b4a6e", waveform_progress_color=VIOLET,
@@ -403,14 +396,17 @@ def sysmon_html():
     return f'<div class="sysmon">{rows}</div>'
 
 
+LOGO_URL = "/gradio_api/file=static/logo.png"
+
+
 def hero(ollama_ok, ollama_text, gpu_text, gpu_ok=True, low_vram=False, cover_text="", cover_ok=False):
     lowvram_chip = chip(t("chip.lowvram"), "warn") if low_vram else ""
     cover_chip = chip(cover_text, "ok" if cover_ok else "") if cover_text else ""
     return f"""
 <div class="hero">
   <div class="hero-left">
-    <div class="logo"><i></i><i></i><i></i><i></i><i></i></div>
-    <div><h1>YuE2 <span>Studio</span></h1>
+    <img class="logo" src="{LOGO_URL}" alt="YuE2 Music Studio">
+    <div><h1>YuE2 <span>Music Studio</span></h1>
       <p>{t("hero.sub")}</p>
       <div class="chips hero-chips">
         {chip(ollama_text, "ok" if ollama_ok else "err")}
@@ -460,7 +456,7 @@ def modal_html():
     de_sub, en_sub = STRINGS["modal.sub"]
     return f"""
 <div class="modal-head">
-  <div class="logo"><i></i><i></i><i></i><i></i><i></i></div>
+  <img class="logo" src="{LOGO_URL}" alt="YuE2 Music Studio">
   <h2>{esc(de_title)}</h2>
   <p>{esc(de_sub)}</p>
   <h2 class="modal-en">{esc(en_title)}</h2>

@@ -1,4 +1,4 @@
-"""YuE2 Studio – Gradio-Oberfläche (Deutsch / English)."""
+"""YuE2 Music Studio – Gradio-Oberfläche (Deutsch / English)."""
 import atexit
 import math
 import os
@@ -904,7 +904,7 @@ def build_ui():
         registry.append((component, spec))
         return component
 
-    with gr.Blocks(title="YuE2 Studio", theme=ui.THEME, css=ui.CSS, js=ui.FORCE_DARK_JS, fill_width=True,
+    with gr.Blocks(title="YuE2 Music Studio", theme=ui.THEME, css=ui.CSS, js=ui.FORCE_DARK_JS, fill_width=True,
                    head=ui.head_html(i18n.get_lang())) as demo:
         # --- Startdialog: Sprache wählen (nur beim allerersten Start)
         # Unsichtbar gebaut; on_load blendet ihn nur ein, solange noch keine Sprache gewählt wurde (kein Aufblitzen).
@@ -1422,6 +1422,7 @@ gr.set_static_paths(paths=[str(Path(__file__).resolve().parent / "static")])
 if __name__ == "__main__":
     # Ein (minimales) I18n-Objekt lässt Gradio seine eigenen Texte nach dem Laden mit navigator.language
     # neu initialisieren – das head-Skript hat sie zu diesem Zeitpunkt bereits auf die gewählte Sprache gesetzt.
-    gradio_i18n = gr.I18n(de={"app.name": "YuE2 Studio"}, en={"app.name": "YuE2 Studio"})
+    gradio_i18n = gr.I18n(de={"app.name": "YuE2 Music Studio"}, en={"app.name": "YuE2 Music Studio"})
     build_ui().queue().launch(server_name="127.0.0.1", server_port=CONFIG["server_port"],
-                              inbrowser=True, allowed_paths=[str(d) for d in ALLOWED_DIRS], i18n=gradio_i18n)
+                              inbrowser=True, allowed_paths=[str(d) for d in ALLOWED_DIRS], i18n=gradio_i18n,
+                              favicon_path=str(Path(__file__).resolve().parent / "static" / "favicon.png"))
