@@ -23,7 +23,8 @@ _ROW_KEYS = {
     "txt.truncated": "truncated", "txt.render": "render", "txt.gpu": "gpu", "txt.llm": "llm",
     "txt.language": "language", "txt.source": "source", "txt.original": "original",
     "txt.lyrics_source": "lyrics_source", "txt.lyrics_mode": "lyrics_mode",
-    "txt.cover_file": "cover_file", "txt.cover_model": "cover_model",
+    "txt.cover_file": "cover_file", "txt.cover_model": "cover_model", "txt.artist": "artist", "txt.album": "album",
+    "txt.mash_a": "mash_a", "txt.mash_b": "mash_b", "txt.mash_shift": "mash_shift", "txt.mash_plan": "mash_plan",
 }
 # Überschriften, nach denen ein Textblock folgt (bis zur nächsten Überschrift)
 _BLOCK_KEYS = {
@@ -32,7 +33,8 @@ _BLOCK_KEYS = {
     "txt.abc_planned": "abc", "txt.cover_prompt": "cover_prompt",
 }
 # Abschnitte mit „Label: Wert“-Zeilen; der Präfix trennt gleichnamige Felder (z. B. Seed von Song und Cover)
-_SECTION_KEYS = {"txt.sec_gen": "", "txt.sec_llm": "", "txt.sec_source": "", "txt.sec_cover": "cover_"}
+_SECTION_KEYS = {"txt.sec_gen": "", "txt.sec_llm": "", "txt.sec_source": "", "txt.sec_cover": "cover_",
+                 "txt.sec_mashup": ""}
 
 
 def _labels(keys):
@@ -45,8 +47,8 @@ def _labels(keys):
 
 _ROWS, _BLOCKS, _SECTIONS = _labels(_ROW_KEYS), _labels(_BLOCK_KEYS), _labels(_SECTION_KEYS)
 _ROW_RE = re.compile(r"^([^:\n]{1,40}):\s+(.*)$")
-_MODES = {text.lower(): mode for key, mode in (("mode.new_plain", "new"), ("mode.remake_plain", "remake"))
-          for text in STRINGS[key]}
+_MODES = {text.lower(): mode for key, mode in (("mode.new_plain", "new"), ("mode.remake_plain", "remake"),
+                                               ("mode.mashup_plain", "mashup")) for text in STRINGS[key]}
 _LYRICS_MODES = {text.lower(): code for code in ("keep", "rewrite", "translate") for text in STRINGS[f"lm.{code}"]}
 
 

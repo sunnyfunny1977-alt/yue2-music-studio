@@ -45,6 +45,38 @@ def _chat(payload):
     return r.json()["message"]["content"]
 
 
+def _chat_stream(payload, on_progress):
+    """Wie _chat, aber gestreamt: on_progress("think"|"write", Zeichen) meldet, ob das Modell gerade nachdenkt
+    oder schon die Antwort schreibt – für echte Fortschrittsanzeigen."""
+    payload = {**payload, "stream": True}
+    try:
+        r = requests.post(f"{BASE}/api/chat", json=payload, timeout=900, stream=True)
+    except requests.RequestException as e:
+        raise OllamaError(t("err.ollama_unreachable", url=BASE, e=e)) from e
+    if r.status_code != 200:
+        raise OllamaError(t("err.ollama_status", code=r.status_code, text=r.text[:500]))
+    content, thought = [], 0
+    for line in r.iter_lines():
+        if not line:
+            continue
+        try:
+            chunk = json.loads(line)
+        except ValueError:
+            continue
+        if chunk.get("error"):
+            raise OllamaError(t("err.ollama_status", code=r.status_code, text=str(chunk["error"])[:500]))
+        msg = chunk.get("message") or {}
+        if msg.get("thinking"):
+            thought += len(msg["thinking"])
+            on_progress("think", thought)
+        if msg.get("content"):
+            content.append(msg["content"])
+            on_progress("write", sum(len(c) for c in content))
+        if chunk.get("done"):
+            break
+    return "".join(content)
+
+
 def _parse_json(text):
     text = re.sub(r"<think>.*?</think>", "", text, flags=re.S).strip()
     text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text)
@@ -78,7 +110,7 @@ def chat_text(model, system, user, temperature=None):
     return re.sub(r"<think>.*?</think>", "", content, flags=re.S).strip()
 
 
-def chat_json(model, system, user, schema=SONG_SCHEMA, temperature=None, think=False):
+def chat_json(model, system, user, schema=SONG_SCHEMA, temperature=None, think=False, raw=False, on_progress=None):
     """Chat mit erzwungenem JSON-Schema.
 
     think=True lässt Denkmodelle (z. B. Qwen) erst überlegen: deutlich bessere Reime und Struktur, aber etwa
@@ -95,14 +127,17 @@ def chat_json(model, system, user, schema=SONG_SCHEMA, temperature=None, think=F
         "options": {"temperature": CONFIG["ollama_temperature"] if temperature is None else temperature,
                     "num_ctx": 32768 if think else 16384},
     }
+    send = (lambda p: _chat_stream(p, on_progress)) if on_progress else _chat
     try:
-        content = _chat(payload)
+        content = send(payload)
     except OllamaError as e:
         if "think" not in str(e).lower():
             raise
         payload.pop("think")
-        content = _chat(payload)
+        content = send(payload)
     data = _parse_json(content)
+    if raw:  # verschachtelte Antworten (z. B. Listen je Mashup-Teil) unverändert zurückgeben
+        return data
     return {k: str(data.get(k) or "").strip() for k in schema["properties"]}
 
 

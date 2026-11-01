@@ -14,18 +14,29 @@ FORMATS = {"MP3": ".mp3", "FLAC": ".flac"}
 LABEL_WIDTH = 18
 
 
-def _write_mp3(audio, sr, target):
+def _write_mp3(audio, sr, target, bitrate="320"):
     ffmpeg = shutil.which("ffmpeg")
     if not ffmpeg:
         raise RuntimeError(t("err.ffmpeg_missing"))
     pcm = np.clip(audio, -1, 1)
     pcm = (pcm * 32767).astype("<i2")
     channels = 1 if pcm.ndim == 1 else pcm.shape[1]
+    quality = ["-q:a", "0"] if str(bitrate).upper() == "V0" else ["-b:a", f"{int(bitrate)}k"]
     cmd = [ffmpeg, "-y", "-loglevel", "error", "-f", "s16le", "-ar", str(sr), "-ac", str(channels),
-           "-i", "pipe:0", "-codec:a", "libmp3lame", "-b:a", "320k", str(target)]
+           "-i", "pipe:0", "-codec:a", "libmp3lame", *quality, str(target)]
     proc = subprocess.run(cmd, input=pcm.tobytes(), capture_output=True)
     if proc.returncode != 0:
         raise RuntimeError(t("err.mp3_failed", e=proc.stderr.decode(errors="replace")))
+
+
+def _format_text(path):
+    """Formatzeile aus der Datei selbst, z. B. „MP3 – 48 kHz Stereo – 192 kbit/s“ oder „FLAC – … – 16 Bit“."""
+    from audio_utils import describe_audio
+    d = describe_audio(path)
+    khz = f"{d.get('khz', 48):g}" if d else "48"
+    if Path(path).suffix.lower() == ".mp3":
+        return t("txt.fmt_mp3", khz=khz, kbps=d.get("kbps") or "?")
+    return t("txt.fmt_flac", khz=khz, bits=d.get("bits") or "?")
 
 
 def _row(key, value):
@@ -46,13 +57,15 @@ def build_info_text(info, audio_files, seconds):
     cfg_text = t("txt.cfg_default", v=info.get("cfg_default", "")) if cfg is None else cfg
     truncated = ", ".join(f"{t('trunc.' + k)}: {t('txt.yes') if v else t('txt.no')}"
                           for k, v in (info.get("truncated") or {}).items())
-    formats = " | ".join(t("txt.fmt_mp3") if f.suffix.lower() == ".mp3" else t("txt.fmt_flac") for f in audio_files)
+    formats = " | ".join(_format_text(f) for f in audio_files)
     lines = [
         _row("txt.title", info.get("title", "")),
+        *([_row("txt.artist", info["artist"])] if info.get("artist") else []),
+        *([_row("txt.album", info["album"])] if info.get("album") else []),
         _row("txt.files", ", ".join(f.name for f in audio_files)),
         _row("txt.saved", f"{datetime.now():%Y-%m-%d %H:%M:%S}"),
         _row("txt.created", info.get("created", "")),
-        _row("txt.mode", t("mode.remake_plain") if mode == "remake" else t("mode.new_plain")),
+        _row("txt.mode", t({"remake": "mode.remake_plain", "mashup": "mode.mashup_plain"}.get(mode, "mode.new_plain"))),
         _row("txt.length", f"{fmt_duration(seconds)} min ({seconds:.1f} s)"),
         _row("txt.format", formats),
         "",
@@ -91,6 +104,14 @@ def build_info_text(info, audio_files, seconds):
                   _row("txt.lyrics_mode", t(f"lm.{lm}") if lm else ""),
                   "", t("txt.lyrics_online" if origin else "txt.transcript"), info.get("transcript", "") or "-",
                   "", t("txt.abc_used"), info.get("abc", "") or "-"]
+    elif mode == "mashup":
+        m = info.get("mashup") or {}
+        lines += ["", t("txt.sec_mashup"),
+                  _row("txt.mash_a", m.get("a", "")),
+                  _row("txt.mash_b", m.get("b", "")),
+                  _row("txt.mash_shift", m.get("shift", "")),
+                  _row("txt.mash_plan", m.get("plan", "")),
+                  "", t("txt.abc_used"), info.get("abc", "") or "-"]
     elif info.get("abc"):
         lines += ["", t("txt.abc_planned"), info["abc"]]
     return "\n".join(lines) + "\n"
@@ -121,8 +142,13 @@ def set_cover_section(text_file, jpg_name, size, model, seed, caption):
     text_file.write_text(body + "\n\n" + "\n".join(section) + "\n", encoding="utf-8")
 
 
-def save_song(audio, sr, name, fmt, out_dir, info, overwrite=False):
-    """Schreibt <Name>.<mp3|flac> und <Name>.txt. Gibt beide Pfade zurück."""
+def save_song(audio, sr, name, fmt, out_dir, info, overwrite=False, export=None):
+    """Schreibt <Name>.<mp3|flac> und <Name>.txt. Gibt beide Pfade zurück.
+
+    export: Einstellungen aus dem Reiter „Einstellungen“ (Bitrate, Bittiefe, Tags); Standard: gespeicherte Werte.
+    """
+    from settings import export_settings
+    export = export or export_settings()
     if fmt not in FORMATS:
         raise ValueError(f"Unknown format: {fmt}")
     out_dir = Path(out_dir)
@@ -140,9 +166,16 @@ def save_song(audio, sr, name, fmt, out_dir, info, overwrite=False):
         if existing:
             raise FileExistsError(t("err.exists", files=", ".join(existing)))
     if fmt == "FLAC":
-        sf.write(audio_file, audio, sr, subtype="PCM_24")
+        sf.write(audio_file, audio, sr, subtype="PCM_16" if int(export.get("flac_bits", 24)) == 16 else "PCM_24")
     else:
-        _write_mp3(audio, sr, audio_file)
+        _write_mp3(audio, sr, audio_file, export.get("mp3_bitrate", "320"))
+    from audio_utils import write_tags
+    try:
+        write_tags(audio_file, {"title": info.get("title", name), "artist": info.get("artist", ""),
+                                "album": info.get("album", ""), "genre": info.get("genre", ""),
+                                "date": info.get("year", ""), "comment": info.get("comment", "")})
+    except RuntimeError:
+        pass  # Tags sind Komfort – der Song selbst ist gespeichert
     seconds = len(audio) / sr
     audio_files = [out_dir / f"{stem}{ext}" for ext in FORMATS.values() if (out_dir / f"{stem}{ext}").exists()]
     # Ein schon erstelltes Cover (z. B. erst MP3 mit Cover, dann zusätzlich FLAC) bleibt in der Info-Datei vermerkt.

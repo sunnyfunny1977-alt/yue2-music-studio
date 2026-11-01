@@ -81,7 +81,7 @@ body { background-attachment: fixed !important; }
 /* Scrollleiste immer einplanen: sonst ändert sich beim Wachsen/Schrumpfen der Seite die Breite aller Spalten
    und die Textfelder im Feinschliff brechen neu um. */
 html { overflow-y: scroll; scrollbar-gutter: stable; }
-.gradio-container { max-width: 1760px !important; margin: 0 auto !important; padding: 20px 22px 40px !important;
+.gradio-container { width: 100% !important; max-width: 1760px !important; margin: 0 auto !important; padding: 20px 22px 40px !important;
   box-sizing: border-box !important; }
 footer { display: none !important; }
 
@@ -299,6 +299,45 @@ footer { display: none !important; }
 #lib-player { min-height: 150px; }
 .reuse-row button { white-space: nowrap; }
 
+/* ---------- Mashup ---------- */
+.mash-songs { gap: 16px !important; }
+.song-a .step-num { background: linear-gradient(135deg, #7c3aed, #a78bfa) !important; }
+.song-b .step-num { background: linear-gradient(135deg, #0891b2, #22d3ee) !important; }
+.song-a.card { border-color: rgba(167,139,250,.35) !important; }
+.song-b.card { border-color: rgba(34,211,238,.35) !important; }
+.timeline { display: flex; flex-direction: column; gap: 8px; }
+.tl-bar { display: flex; gap: 3px; height: 34px; border-radius: 12px; overflow: hidden; }
+.tl-seg { display: flex; align-items: center; justify-content: center; min-width: 18px; overflow: hidden;
+  font-size: 11px; font-weight: 700; color: #fff; white-space: nowrap; text-overflow: ellipsis; }
+.tl-seg span { overflow: hidden; text-overflow: ellipsis; padding: 0 4px; }
+.tl-seg.a { background: linear-gradient(180deg, #8b5cf6, #6d28d9); }
+.tl-seg.b { background: linear-gradient(180deg, #22d3ee, #0e7490); }
+.tl-legend { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 12.5px; color: #c9c7e6; }
+.tl-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; margin-left: 10px; }
+.tl-dot.a { background: #8b5cf6; } .tl-dot.b { background: #22d3ee; }
+.mash-slot { border-radius: 16px !important; padding: 10px 12px !important; gap: 6px !important;
+  background: rgba(0,0,0,.22) !important; border: 1px solid rgba(255,255,255,.08) !important;
+  border-left: 4px solid #8b5cf6 !important; }
+.mash-slot:has(.slot-head.b) { border-left-color: #22d3ee !important; background: rgba(34,211,238,.05) !important; }
+.mash-slot:has(.slot-head.a) { background: rgba(139,92,246,.06) !important; }
+.slot-row { align-items: center !important; gap: 10px !important; }
+.slot-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.slot-num { font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: #9b99bd; }
+.slot-tag { font-weight: 750; color: #fff; font-size: 14.5px; }
+.slot-src { font-size: 12px; font-weight: 650; padding: 3px 9px; border-radius: 999px; }
+.slot-head.a .slot-src { background: rgba(139,92,246,.22); color: #ddd6fe; }
+.slot-head.b .slot-src { background: rgba(34,211,238,.18); color: #a5f3fc; }
+.slot-note { font-size: 11.5px; color: #9b99bd; }
+.slot-stale { font-size: 11.5px; color: #fde68a; background: rgba(251,191,36,.12); padding: 2px 8px; border-radius: 999px; }
+.slot-ab label { padding: 4px 14px !important; font-size: 12.5px !important; }
+.slot-ab label:first-child.selected { background: linear-gradient(135deg, #7c3aed, #a78bfa) !important; }
+.slot-ab label:last-child.selected { background: linear-gradient(135deg, #0891b2, #22d3ee) !important; }
+.slot-text textarea { font-family: var(--font-mono) !important; font-size: 13px !important; line-height: 1.55 !important; }
+.abc-staff { width: 100%; overflow-x: auto; padding: 4px 2px 0; }
+.task-prog .prog-steps { flex-wrap: nowrap; }
+.task-prog .ps { flex: 1 1 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.abc-staff svg { max-width: 100%; height: auto; display: block; }
+
 /* ---------- Song-Info (Remake) ---------- */
 .track { display: flex; gap: 16px; align-items: center; padding: 14px; border-radius: 18px;
   background: linear-gradient(135deg, rgba(124,58,237,.14), rgba(6,182,212,.07));
@@ -391,7 +430,8 @@ def track_head(track):
     chips = []
     if track.seconds:
         chips.append(chip(f"⏱ {fmt_duration(track.seconds)} min"))
-    chips.append(chip(t("lib.chip_remake") if info.get("mode") == "remake" else t("lib.chip_new"), "accent"))
+    chips.append(chip(t({"remake": "lib.chip_remake", "mashup": "lib.chip_mashup"}.get(info.get("mode"), "lib.chip_new")),
+                      "accent"))
     if info.get("language"):
         chips.append(chip(f"🌐 {info['language']}"))
     if track.genre():
@@ -571,6 +611,88 @@ window.yue2Sysmon = function (raw) {
 </script>"""
 
 
+MASH_COLORS = {"A": "#a78bfa", "B": "#22d3ee"}
+
+# Noten (abcjs, lokal unter static/): rendert alle .abc-staff[data-abc] und wiederholt das bei Änderungen.
+# Nur Blockkommentare – Gradio fügt den Kopf u. U. ohne Zeilenumbrüche ein.
+STAFF_JS = """<script src="/gradio_api/file=static/abcjs-basic-min.js"></script>
+<script>
+(function () {
+  function render() {
+    if (!window.ABCJS) { return; }
+    document.querySelectorAll('.abc-staff[data-abc]').forEach(function (el) {
+      var abc = el.getAttribute('data-abc');
+      var color = el.getAttribute('data-color') || '#e8e7f5';
+      if (el.__abc === abc + color) { return; }
+      el.__abc = abc + color;
+      /* Breite Notenzeile (1800) mit Umbruch nach ~10 Takten, per responsive auf die Kartenbreite skaliert –
+         einheitliche Größe, auch wenn der Teil beim Rendern noch ausgeblendet ist. */
+      try {
+        ABCJS.renderAbc(el, abc, { responsive: 'resize', foregroundColor: color, paddingtop: 6, paddingbottom: 10,
+          paddingleft: 0, paddingright: 6, staffwidth: 1800,
+          wrap: { minSpacing: 1.5, maxSpacing: 2.6, preferredMeasuresPerLine: 10 }, add_classes: false });
+      } catch (e) { el.textContent = ''; }
+    });
+  }
+  var timer = null;
+  function schedule() { if (timer) { return; } timer = setTimeout(function () { timer = null; render(); }, 150); }
+  function start() {
+    new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true, attributes: true,
+      attributeFilter: ['data-abc', 'data-color'] });
+    schedule();
+  }
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', start); } else { start(); }
+})();
+</script>"""
+
+
+def task_progress_html(title, steps, current, pct, elapsed, detail=""):
+    """Fortschritt einer mehrstufigen Aufgabe (z. B. Mashup-Analyse) im Stil der Generierungsanzeige.
+
+    steps: Beschriftungen der Schritte; current: Index des laufenden Schritts (len(steps) = fertig)."""
+    pills = []
+    for i, label in enumerate(steps):
+        cls = "done" if i < current else "active" if i == current else ""
+        pills.append(f'<span class="ps {cls}" title="{esc(label)}">{esc(label)}</span>')
+    pct = max(2.0, min(99.0, pct))
+    detail_html = f'<span class="chip">{esc(detail)}</span>' if detail else ""
+    return f"""
+<div class="prog task-prog">
+  <div class="prog-head"><span class="prog-stage">{esc(title)} …</span><span class="prog-pct">{pct:.0f} %</span></div>
+  <div class="prog-bar"><div class="prog-fill" style="width:{pct:.1f}%"></div></div>
+  <div class="prog-steps">{''.join(pills)}</div>
+  <div class="chips"><span class="chip">⏱ {fmt_duration(elapsed)}</span>{detail_html}</div>
+</div>"""
+
+
+def staff_html(abc, source):
+    """Notenzeile (Gesangsstimme) eines Mashup-Teils in der Farbe des Quell-Songs."""
+    if not abc:
+        return ""
+    return f'<div class="abc-staff" data-abc="{esc(abc)}" data-color="{MASH_COLORS.get(source, "#e8e7f5")}"></div>'
+
+
+def slot_head(index, tag, source, song_title, available_b=True, stale=False):
+    label = t("mash.from", song=source, title=song_title or "–")
+    extra = "" if available_b else f'<span class="slot-note">{esc(t("mash.only_a"))}</span>'
+    stale_html = f'<span class="slot-stale">{esc(t("mash.stale"))}</span>' if stale else ""
+    return (f'<div class="slot-head {source.lower()}"><span class="slot-num">{index + 1:02d}</span>'
+            f'<span class="slot-tag">{esc(tag)}</span><span class="slot-src">{esc(label)}</span>{extra}{stale_html}</div>')
+
+
+def timeline_html(slots, title_a="", title_b=""):
+    """Ablaufleiste: ein Segment je Teil, Breite nach Takten, Farbe nach Quelle."""
+    if not slots:
+        return ""
+    total = sum(max(s.get("bars", 1), 1) for s in slots)
+    segs = "".join(
+        f'<div class="tl-seg {s["source"].lower()}" style="flex:{max(s.get("bars", 1), 1) / total:.4f}" '
+        f'title="{esc(s["tag"])} – {s["source"]}"><span>{esc(s["tag"])}</span></div>' for s in slots)
+    legend = (f'<div class="tl-legend"><span class="tl-dot a"></span>{esc(t("mash.song_a"))}: {esc(title_a or "–")}'
+              f'<span class="tl-dot b"></span>{esc(t("mash.song_b"))}: {esc(title_b or "–")}</div>')
+    return f'<div class="timeline"><div class="tl-bar">{segs}</div>{legend}</div>'
+
+
 def head_html(lang):
     """Gradio übersetzt seine eigenen Texte (z. B. „Audio hier ablegen“) anhand von navigator.language.
     Vor dem Start der App auf die gewählte Sprache setzen (zuletzt gewählte Sprache aus localStorage)."""
@@ -582,4 +704,4 @@ def head_html(lang):
     Object.defineProperty(navigator, 'languages', {{ get: function () {{ return [l]; }} }});
   }} catch (e) {{}}
 }})();
-</script>""" + SYSMON_JS
+</script>""" + SYSMON_JS + STAFF_JS

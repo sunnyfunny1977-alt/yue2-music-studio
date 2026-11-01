@@ -84,6 +84,23 @@ Die Oberfläche gibt es auf **Deutsch** und **Englisch**.
    - `<Name>.txt` mit Titel, Datum, Modus, Idee, Style, Lyrics, Songlänge, Seed, Einstellungen, Modellen und beim Remake zusätzlich Quelldatei, Transkript und Melodie-ABC
    - optional `<Name>.jpg`: Mit **„🎨 Cover mit FLUX.3 erzeugen“** entsteht direkt nach dem Speichern ein Cover (siehe unten).
 
+## Mashup
+Im Reiter **„🎚️ Mashup“** entsteht aus zwei Songs ein neues Lied:
+1. **Song A** und **Song B** hochladen (Song A gibt Ablauf, Tonart und Tempo vor). Optional den Originaltext einfügen, sonst erkennt Whisper ihn.
+2. **„Beide Songs analysieren“** – SheetSage2 schreibt die Melodien als Noten, die KI (Denkmodus) schlägt für jeden Teil vor, ob er aus A oder B kommt (z. B. Strophen A, Refrains B).
+3. Die **Ablaufleiste** zeigt farbig, welcher Song wo erklingt (**A violett, B cyan**). Jeder Teil hat eine eigene Karte mit **A/B-Umschalter**, dem **Text über den Noten** und den **Noten der Gesangsstimme** in der Farbe des Quell-Songs. Song-B-Teile werden automatisch in Tonart und Tempo von A angeglichen (Transposition, Notenlänge, Oktavlage) – die Noten zeigen schon die angeglichene Fassung.
+4. **Style-Prompt** frei eingeben oder **„Style vorschlagen“**, dann **„Mashup-Text erstellen“**: Die KI (immer im Denkmodus) verwendet für jeden Teil den Originaltext des gewählten Songs und baut mashup-typische Übergänge ein – angeteaserte Hooks, Call-and-Response, verbindende Brückenzeilen.
+5. Texte direkt bearbeiten, Teile umschalten (der Text des Teils wird als veraltet markiert, **„Text für geänderte Teile neu erzeugen“** schreibt nur diese neu) oder per **Korrekturwunsch** von der KI anpassen lassen.
+6. **„Ins Studio übernehmen“** – Noten, Text und Style landen im Studio; dort wie gewohnt generieren, speichern und Cover erstellen. Die Info-TXT vermerkt beide Quellen, die Angleichung von Song B und den Ablauf; die Bibliothek zeigt den Song als „Mashup“ und kann ihn per „Alles übernehmen“ erneut generieren.
+
+## Einstellungen (Export)
+Im Reiter **„⚙️ Einstellungen“** legst du fest, wie Songs gespeichert werden (dauerhaft in `user_settings.json`):
+- **MP3-Bitrate**: 128, 192, 256, 320 kbit/s oder VBR V0 · **FLAC-Bittiefe**: 16 oder 24 Bit
+- **Tags**: Künstler, Album, Genre, Jahr, Kommentar – werden in MP3 und FLAC geschrieben und in der Info-TXT vermerkt.
+- **Künstlername aufs Cover**: Ist ein Künstler gesetzt, malt FLUX.3 ihn zusätzlich zum Titel ins Cover (kleiner, direkt unter oder über dem Titel).
+
+> **English:** The **Mashup** tab combines two songs: song A sets arrangement, key and tempo; for each section you choose whether melody and words come from A or B (colour-coded: A violet, B cyan; song B is transposed and time-matched automatically). Each section card shows its lyrics above the rendered vocal notes. The AI (always in thinking mode) writes the mashup lyrics from both originals with typical mashup transitions; you can edit them, switch sections and rewrite only the changed ones, or request corrections. *Send to studio* hands notes, lyrics and style to the studio for generating and saving. The **Settings** tab sets MP3 bitrate (128–320 kbps or V0), FLAC bit depth (16/24) and tags (artist, album, genre, year, comment); a set artist name is also painted onto FLUX covers.
+
 ## Bibliothek
 Der Reiter **„📚 Bibliothek“** zeigt alle gespeicherten Songs als Kacheln: Cover (oder ein Platzhalter mit dem Titel), darunter Titel, Länge, Genre und Tempo. Erfasst werden der Standard-Ausgabeordner und jeder Ordner, in den du schon gespeichert hast. Suche (Titel, Style, Lyrics) und Sortierung (neueste, Titel, Länge) helfen beim Finden.
 
@@ -167,4 +184,4 @@ Die App läuft auch auf AMD-Grafikkarten. Grundlage ist AMDs offizielles PyTorch
 
 ## Lizenz
 Der Code dieser App steht unter der [Apache-2.0-Lizenz](LICENSE). Copyright 2026 sunnyfunny1977-alt.
-Die Modelle (YuE2, SheetSage2, MERT, Whisper) und Bibliotheken werden von `install.ps1` aus ihren Original-Quellen geladen und unterliegen ihren eigenen Lizenzen. Das optionale Bildmodell FLUX.3 Image Klein (`install_cover.ps1`) steht unter der FLUX Kommunity License von Black Forest Labs; `prompts/flux3_upsampler_t2i.md` ist der unveränderte Upsampler-Systemprompt aus `black-forest-labs/flux-3-image-klein-pup` (Apache-2.0).
+Die Modelle (YuE2, SheetSage2, MERT, Whisper) und Bibliotheken werden von `install.ps1` aus ihren Original-Quellen geladen und unterliegen ihren eigenen Lizenzen. Die Notendarstellung nutzt [abcjs](https://abcjs.net) (MIT-Lizenz, `static/abcjs-basic-min.js`, Lizenz in `static/abcjs-LICENSE.md`). Das optionale Bildmodell FLUX.3 Image Klein (`install_cover.ps1`) steht unter der FLUX Kommunity License von Black Forest Labs; `prompts/flux3_upsampler_t2i.md` ist der unveränderte Upsampler-Systemprompt aus `black-forest-labs/flux-3-image-klein-pup` (Apache-2.0).

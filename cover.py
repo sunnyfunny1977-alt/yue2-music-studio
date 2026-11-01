@@ -131,7 +131,7 @@ def _upsampler_prompt():
     return "\n".join(line for line in text.splitlines() if not line.startswith("<!--")).strip()
 
 
-def cover_request(title, style, concept, lyrics):
+def cover_request(title, style, concept, lyrics, artist=""):
     """Kurzer Bildwunsch, den Ollama mit dem offiziellen FLUX.3-Upsampler-Prompt zur Bildbeschreibung ausbaut."""
     sung = [ln.strip() for ln in (lyrics or "").splitlines() if ln.strip() and not ln.strip().startswith("[")]
     excerpt = " / ".join(dict.fromkeys(sung))[:900]
@@ -145,11 +145,21 @@ def cover_request(title, style, concept, lyrics):
         "clear motif. Pick an artistic medium and color palette that fit the genre and mood (for example "
         "illustration, painting, graphic design or photography). The artwork fills the whole square canvas: "
         "no border, no frame, no vinyl or CD mockup, no hands holding it.\n"
-        f"Render exactly one piece of text: the song title \"{title}\" as large, clearly legible typography that "
-        "belongs to the design, placed in the upper third of the cover (players and libraries overlay the lower "
-        "edge); describe its font style and color. Write the title exactly as given, letter by letter. No other "
-        "words, letters, numbers, artist names, logos, labels or watermarks anywhere."
+        + (_text_rule_artist(title, artist) if artist else
+           f"Render exactly one piece of text: the song title \"{title}\" as large, clearly legible typography that "
+           "belongs to the design, placed in the upper third of the cover (players and libraries overlay the lower "
+           "edge); describe its font style and color. Write the title exactly as given, letter by letter. No other "
+           "words, letters, numbers, artist names, logos, labels or watermarks anywhere.")
     )
+
+
+def _text_rule_artist(title, artist):
+    return (f"Render exactly two pieces of text and nothing else: the song title \"{title}\" as large, clearly "
+            "legible typography in the upper third of the cover, and the artist name "
+            f"\"{artist}\" in smaller, matching typography on its own line directly above or below the title "
+            "(still in the upper half – players and libraries overlay the lower edge). Describe font style and color "
+            "of both. Write both exactly as given, letter by letter. No other words, letters, numbers, logos, "
+            "labels or watermarks anywhere.")
 
 
 def _title_sentence(title):
@@ -157,22 +167,35 @@ def _title_sentence(title):
             "letters that contrast strongly with the background.")
 
 
-def cover_caption(model, title, style, concept, lyrics):
+def cover_caption(model, title, style, concept, lyrics, artist=""):
     if not model:
         raise RuntimeError(t("err.no_model"))
-    caption = llm.chat_text(model, _upsampler_prompt(), cover_request(title, style, concept, lyrics), temperature=0.7)
+    caption = llm.chat_text(model, _upsampler_prompt(), cover_request(title, style, concept, lyrics, artist),
+                            temperature=0.7)
     caption = caption.strip().strip('"').strip()
     if not caption:
         raise RuntimeError(t("cover.no_caption"))
     # Das Sprachmodell lässt den Schriftzug gelegentlich weg – ohne Titel in Anführungszeichen malt FLUX keinen.
     if f'"{title}"'.lower() not in caption.lower():
         caption += _title_sentence(title)
+    if artist and f'"{artist}"'.lower() not in caption.lower():
+        caption += (f" Directly below the title, the artist name \"{artist}\" is written in smaller, clearly "
+                    "legible letters in the same style.")
     return caption
+
+
+def cover_artist(info):
+    """Künstler fürs Cover: aus dem Song (TXT/Tags), sonst aus den Einstellungen – sofern gewünscht."""
+    from settings import export_settings
+    export = export_settings()
+    if not export.get("artist_on_cover", True):
+        return ""
+    return (info.get("artist") or export.get("artist") or "").strip()
 
 
 # --------------------------------------------------------------------------- Bild speichern und einbetten
 
-def _embed(audio, cover_jpg, title):
+def _embed(audio, cover_jpg, title, artist=""):
     ffmpeg = shutil.which("ffmpeg")
     if not ffmpeg:
         raise RuntimeError(t("err.ffmpeg_missing"))
@@ -183,30 +206,24 @@ def _embed(audio, cover_jpg, title):
            "-disposition:v:0", "attached_pic"]
     if title:
         cmd += ["-metadata", f"title={title}"]
+    if artist:
+        cmd += ["-metadata", f"artist={artist}"]
     if audio.suffix.lower() == ".mp3":
         cmd += ["-id3v2_version", "3"]
     proc = subprocess.run(cmd + [str(tmp)], capture_output=True)
     if proc.returncode != 0 or not tmp.exists():
         tmp.unlink(missing_ok=True)
         raise RuntimeError(t("cover.embed_failed", file=audio.name, e=proc.stderr.decode(errors="replace")[-400:]))
-    # Virenscanner, Windows-Suche oder ein Player halten frische Dateien manchmal kurz fest – kurz erneut versuchen.
-    for attempt in range(20):
-        try:
-            os.replace(tmp, audio)
-            return
-        except PermissionError:
-            if attempt == 19:
-                tmp.unlink(missing_ok=True)
-                raise
-            time.sleep(0.5)
+    from audio_utils import replace_with_retry
+    replace_with_retry(tmp, audio)
 
 
-def embed_existing(audio_file, title=""):
+def embed_existing(audio_file, title="", artist=""):
     """Bettet ein schon vorhandenes <Name>.jpg in eine neu gespeicherte Audiodatei ein (z. B. FLAC nach MP3)."""
     audio_file = Path(audio_file)
     jpg = audio_file.with_suffix(COVER_EXT)
     if jpg.exists():
-        _embed(audio_file, jpg, title)
+        _embed(audio_file, jpg, title, artist)
         return True
     return False
 
@@ -225,7 +242,9 @@ def make_cover(folder, stem, info, model, seed=None, on_status=None):
     seed = random.randrange(0, 2**31) if seed is None else int(seed)
 
     status("prompt")
-    caption = cover_caption(model, title, info.get("style", ""), info.get("concept", ""), info.get("lyrics", ""))
+    artist = cover_artist(info)
+    caption = cover_caption(model, title, info.get("style", ""), info.get("concept", ""), info.get("lyrics", ""),
+                            artist)
     llm.unload(model)  # VRAM für FLUX frei machen
 
     status("load")
@@ -242,7 +261,7 @@ def make_cover(folder, stem, info, model, seed=None, on_status=None):
     for ext in (".mp3", ".flac"):
         audio = folder / f"{stem}{ext}"
         if audio.exists():
-            _embed(audio, jpg, title)
+            _embed(audio, jpg, title, info.get("artist", ""))
             embedded.append(ext[1:].upper())
     txt = folder / f"{stem}.txt"
     if txt.exists():
