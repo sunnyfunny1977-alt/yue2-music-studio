@@ -86,7 +86,7 @@ Die Oberfläche gibt es auf **Deutsch** und **Englisch**.
 
 ## Mashup
 Im Reiter **„🎚️ Mashup“** entsteht aus zwei Songs ein neues Lied:
-1. **Song A** und **Song B** hochladen (Song A gibt Ablauf, Tonart und Tempo vor). Optional den Originaltext einfügen, sonst erkennt Whisper ihn.
+1. **Song A** und **Song B** hochladen (Song A gibt Ablauf, Tonart und Tempo vor). Den Originaltext je Song optional einfügen oder unter **„Originaltext online suchen“** von [LRCLIB.net](https://lrclib.net) übernehmen (Titel und Interpret sind aus den Tags vorbelegt) – sonst erkennt Whisper ihn.
 2. **„Beide Songs analysieren“** – SheetSage2 schreibt die Melodien als Noten, die KI (Denkmodus) schlägt für jeden Teil vor, ob er aus A oder B kommt (z. B. Strophen A, Refrains B).
 3. Die **Ablaufleiste** zeigt farbig, welcher Song wo erklingt (**A violett, B cyan**). Jeder Teil hat eine eigene Karte mit **A/B-Umschalter**, dem **Text über den Noten** und den **Noten der Gesangsstimme** in der Farbe des Quell-Songs. Song-B-Teile werden automatisch in Tonart und Tempo von A angeglichen (Transposition, Notenlänge, Oktavlage) – die Noten zeigen schon die angeglichene Fassung.
 4. **Style-Prompt** frei eingeben oder **„Style vorschlagen“**, dann **„Mashup-Text erstellen“**: Die KI (immer im Denkmodus) verwendet für jeden Teil den Originaltext des gewählten Songs und baut mashup-typische Übergänge ein – angeteaserte Hooks, Call-and-Response, verbindende Brückenzeilen.

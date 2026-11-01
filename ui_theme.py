@@ -353,8 +353,8 @@ footer { display: none !important; }
 .track-hint { font-size: 12.5px; color: #fde68a; margin-top: 2px; }
 .lyr-hint { font-size: 12.5px; color: #9b99bd; line-height: 1.5; }
 .lyr-hint a { color: #c4b5fd; }
-#lyr-dd ul.options { min-width: 420px !important; }
-#lyr-dd ul.options li { width: auto !important; }
+#lyr-dd ul.options, #lyr-dd-a ul.options, #lyr-dd-b ul.options { min-width: 420px !important; }
+#lyr-dd ul.options li, #lyr-dd-a ul.options li, #lyr-dd-b ul.options li { width: auto !important; }
 
 /* ---------- Sprachumschalter & Startdialog ---------- */
 .hero-chips { margin-top: 12px; }

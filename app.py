@@ -881,11 +881,6 @@ def mash_send(state, style, *texts):
 
 # ---------------------------------------------------------------- Einstellungen (Export)
 
-def library_tags(path_):
-    from audio_utils import read_tags
-    return read_tags(path_) if path_ else {}
-
-
 def mp3_choices():
     return [(f"{b} kbit/s", b) for b in settings.MP3_BITRATES if b != "V0"] + [(t("exp.mp3_v0"), "V0")]
 
@@ -1098,6 +1093,24 @@ def build_ui():
                     mash_file_a = tr(gr.Audio(label=t("mash.upload"), type="filepath", sources=["upload"],
                                               waveform_options=ui.WAVEFORM), label="mash.upload")
                     mash_card_a = gr.HTML(elem_classes="html-slot")
+                    mash_info_a = gr.State(None)  # Tags des Songs (Dauer für die Online-Suche)
+                    mash_results_a = gr.State([])
+                    with gr.Accordion(t("lyr.acc"), open=False) as mash_lyr_acc_a:
+                        with gr.Row(equal_height=True):
+                            mash_lyr_title_a = tr(gr.Textbox(label=t("lyr.title"), max_lines=1, min_width=120),
+                                                    label="lyr.title")
+                            mash_lyr_artist_a = tr(gr.Textbox(label=t("lyr.artist"), max_lines=1, min_width=120),
+                                                     label="lyr.artist")
+                        mash_lyr_search_a = tr(gr.Button(t("lyr.search_btn"), size="sm", variant="secondary"),
+                                                 value="lyr.search_btn")
+                        mash_lyr_choice_a = tr(gr.Dropdown([], label=t("lyr.results"), elem_id="lyr-dd-a"),
+                                                 label="lyr.results")
+                        mash_lyr_use_a = tr(gr.Button(t("lyr.use_btn"), size="sm", variant="primary"),
+                                              value="lyr.use_btn")
+                        mash_lyr_status_a = gr.HTML(elem_classes="html-slot")
+                        tr(gr.HTML(f'<div class="lyr-hint">{t("lyr.hint")}</div>'),
+                           value=lambda: f'<div class="lyr-hint">{t("lyr.hint")}</div>')
+                    tr(mash_lyr_acc_a, label="lyr.acc")
                     mash_text_a = tr(gr.Textbox(label=t("mash.lyrics_label"), lines=4, max_lines=10),
                                      label="mash.lyrics_label")
                     mash_src_a = gr.State(None)
@@ -1107,6 +1120,24 @@ def build_ui():
                     mash_file_b = tr(gr.Audio(label=t("mash.upload"), type="filepath", sources=["upload"],
                                               waveform_options=ui.WAVEFORM), label="mash.upload")
                     mash_card_b = gr.HTML(elem_classes="html-slot")
+                    mash_info_b = gr.State(None)  # Tags des Songs (Dauer für die Online-Suche)
+                    mash_results_b = gr.State([])
+                    with gr.Accordion(t("lyr.acc"), open=False) as mash_lyr_acc_b:
+                        with gr.Row(equal_height=True):
+                            mash_lyr_title_b = tr(gr.Textbox(label=t("lyr.title"), max_lines=1, min_width=120),
+                                                    label="lyr.title")
+                            mash_lyr_artist_b = tr(gr.Textbox(label=t("lyr.artist"), max_lines=1, min_width=120),
+                                                     label="lyr.artist")
+                        mash_lyr_search_b = tr(gr.Button(t("lyr.search_btn"), size="sm", variant="secondary"),
+                                                 value="lyr.search_btn")
+                        mash_lyr_choice_b = tr(gr.Dropdown([], label=t("lyr.results"), elem_id="lyr-dd-b"),
+                                                 label="lyr.results")
+                        mash_lyr_use_b = tr(gr.Button(t("lyr.use_btn"), size="sm", variant="primary"),
+                                              value="lyr.use_btn")
+                        mash_lyr_status_b = gr.HTML(elem_classes="html-slot")
+                        tr(gr.HTML(f'<div class="lyr-hint">{t("lyr.hint")}</div>'),
+                           value=lambda: f'<div class="lyr-hint">{t("lyr.hint")}</div>')
+                    tr(mash_lyr_acc_b, label="lyr.acc")
                     mash_text_b = tr(gr.Textbox(label=t("mash.lyrics_label"), lines=4, max_lines=10),
                                      label="mash.lyrics_label")
                     mash_src_b = gr.State(None)
@@ -1346,12 +1377,19 @@ def build_ui():
 
         # --- Mashup
         slot_outputs = slot_groups + slot_heads + slot_radios + slot_texts + slot_staffs
-        mash_file_a.change(lambda f: (ui.track_card(library_tags(f), Path(f).name) if f else "", None),
-                           inputs=mash_file_a, outputs=[mash_card_a, mash_src_a], show_progress="hidden")
-        mash_file_b.change(lambda f: (ui.track_card(library_tags(f), Path(f).name) if f else "", None),
-                           inputs=mash_file_b, outputs=[mash_card_b, mash_src_b], show_progress="hidden")
-        mash_text_a.input(lambda txt: "manual" if (txt or "").strip() else None, inputs=mash_text_a, outputs=mash_src_a)
-        mash_text_b.input(lambda txt: "manual" if (txt or "").strip() else None, inputs=mash_text_b, outputs=mash_src_b)
+        # Song A/B: Song-Karte + Vorbelegung der Online-Suche (wie im Remake), Online-Text übernehmen
+        for f_in, card, info, l_title, l_artist, l_choice, l_results, src, text, l_search, l_use, l_status in (
+                (mash_file_a, mash_card_a, mash_info_a, mash_lyr_title_a, mash_lyr_artist_a, mash_lyr_choice_a,
+                 mash_results_a, mash_src_a, mash_text_a, mash_lyr_search_a, mash_lyr_use_a, mash_lyr_status_a),
+                (mash_file_b, mash_card_b, mash_info_b, mash_lyr_title_b, mash_lyr_artist_b, mash_lyr_choice_b,
+                 mash_results_b, mash_src_b, mash_text_b, mash_lyr_search_b, mash_lyr_use_b, mash_lyr_status_b)):
+            f_in.change(load_source_info, inputs=f_in, outputs=[card, info, l_title, l_artist, l_choice, l_results, src],
+                        show_progress="hidden")
+            l_search.click(search_lyrics, inputs=[l_title, l_artist, info], outputs=[l_choice, l_results, l_status])
+            l_use.click(use_lyrics, inputs=[l_choice, l_results], outputs=[text, src, l_status])
+            # Eigener Text zählt als Originaltext (Whisper entfällt); ein übernommener Online-Text bleibt als Quelle
+            text.input(lambda txt, current: (current or "manual") if (txt or "").strip() else None,
+                       inputs=[text, src], outputs=src)
         mash_analyze_btn.click(mash_analyze,
                                inputs=[mash_file_a, mash_file_b, mash_text_a, mash_src_a, mash_text_b, mash_src_b,
                                        mash_state, model_dd],
