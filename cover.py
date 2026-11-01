@@ -2,6 +2,7 @@
 import json
 import os
 import random
+import re
 import shutil
 import subprocess
 import tempfile
@@ -131,35 +132,92 @@ def _upsampler_prompt():
     return "\n".join(line for line in text.splitlines() if not line.startswith("<!--")).strip()
 
 
-def cover_request(title, style, concept, lyrics, artist=""):
+# Remakes und Mashups tragen wie Remix-Singles einen Zusatz auf dem Cover.
+EDITIONS = {"remake": "REMAKE", "mashup": "MASHUP"}
+
+# Bildansatz und Schriftanordnung werden je Cover (über den Seed) gewählt – sonst landet das Sprachmodell
+# fast immer bei „Szene unten, Titel mittig darüber“.
+APPROACHES = [
+    "a close-up photographic portrait of the singer or band (matching the voice in the music style), dramatic "
+    "studio or available light, the face or silhouette filling most of the frame",
+    "a cinematic scene from the song's story, framed like a film still with a strong focal point",
+    "a minimal graphic design: one symbolic object or shape on a bold flat color field with generous negative space",
+    "a painted or illustrated artwork in a distinctive art style that suits the genre",
+    "a surreal photo montage that turns the song's central metaphor into one striking, unexpected image",
+    "a typographic cover where the title lettering itself is the hero visual, supported by a simple image or texture",
+]
+MASHUP_APPROACH = ("a fused composition that merges two visual worlds – one for each source song – into a single "
+                   "image, for example a diagonal split, a double exposure or a torn-paper collage")
+LAYOUTS = [
+    "the title large and centered across the top",
+    "the title set flush left in the top-left area like an editorial magazine cover",
+    "the title as a huge wordmark spanning the full width along the top edge",
+    "the title stacked over two or three lines in the upper left with tight leading",
+]
+
+
+def cover_edition(info):
+    return EDITIONS.get((info.get("mode") or "").lower(), "")
+
+
+def mashup_sources(info):
+    """„Titel – Interpret“ von Song A und B (aus dem Generieren oder aus der Info-TXT)."""
+    meta = info.get("mashup") or {}
+    pair = [meta.get("a") or info.get("mash_a") or "", meta.get("b") or info.get("mash_b") or ""]
+    # „Titel – Interpret (datei.mp3) · Tonart · BPM“ → „Titel – Interpret“
+    return [re.sub(r"\s*\([^()]*\)\s*$", "", p.split(" · ")[0]).strip() for p in pair if p.strip()]
+
+
+def cover_request(title, style, concept, lyrics, artist="", edition="", sources=(), seed=0):
     """Kurzer Bildwunsch, den Ollama mit dem offiziellen FLUX.3-Upsampler-Prompt zur Bildbeschreibung ausbaut."""
     sung = [ln.strip() for ln in (lyrics or "").splitlines() if ln.strip() and not ln.strip().startswith("[")]
     excerpt = " / ".join(dict.fromkeys(sung))[:900]
+    rng = random.Random(seed)
+    approach = rng.choice(APPROACHES)
+    layout = rng.choice(LAYOUTS)
+    kind = {"REMAKE": "remake single", "MASHUP": "mashup single"}.get(edition, "single")
+    if edition == "MASHUP" and len(sources) == 2:
+        approach = MASHUP_APPROACH
+        origin = (f"This mashup blends two songs: {sources[0]} and {sources[1]}. Use them only as inspiration for "
+                  "the two visual worlds – never write their titles or artists on the cover.\n")
+    elif edition == "REMAKE":
+        origin = "This is a reimagined new version of an existing song, so give it a fresh, contemporary look.\n"
+    else:
+        origin = ""
     return (
         "TARGET CANVAS: 1:1\n"
-        f"Square album cover artwork for the song \"{title}\".\n"
+        f"Official cover art for the {kind} \"{title}\"" + (f" by {artist}" if artist else "") + ".\n"
         f"Music style: {style or 'unknown'}\n"
         + (f"Song concept: {concept}\n" if concept else "")
-        + f"Key lyrics: {excerpt or '(instrumental)'}\n\n"
-        "Design an original, striking album cover that shows the song's central image, story and mood in one "
-        "clear motif. Pick an artistic medium and color palette that fit the genre and mood (for example "
-        "illustration, painting, graphic design or photography). The artwork fills the whole square canvas: "
-        "no border, no frame, no vinyl or CD mockup, no hands holding it.\n"
-        + (_text_rule_artist(title, artist) if artist else
-           f"Render exactly one piece of text: the song title \"{title}\" as large, clearly legible typography that "
-           "belongs to the design, placed in the upper third of the cover (players and libraries overlay the lower "
-           "edge); describe its font style and color. Write the title exactly as given, letter by letter. No other "
-           "words, letters, numbers, artist names, logos, labels or watermarks anywhere.")
+        + f"Key lyrics: {excerpt or '(instrumental)'}\n"
+        + origin + "\n"
+        "Design it like a professionally released record cover from a label, the kind shown on streaming services "
+        "and vinyl sleeves – bold, iconic and recognizable even as a small thumbnail, not a generic stock image. "
+        f"Visual approach: {approach}. Follow the cover conventions of the genre (synthwave: neon chrome lettering "
+        "and retro sunsets; folk: warm analog film photo and hand-lettered type; metal: dark detailed illustration "
+        "and a band-logo wordmark; hip-hop: flash photography and heavy sans-serif; pop: glossy studio portrait and "
+        "clean bold type; classical: fine art and elegant serif). High production value, print-quality finish, film "
+        "grain or paper texture where it fits. The artwork fills the whole square canvas: no border, no frame, no "
+        "vinyl or CD mockup, no hands holding it, no streaming app interface.\n"
+        + _text_rule(title, artist, edition, layout)
     )
 
 
-def _text_rule_artist(title, artist):
-    return (f"Render exactly two pieces of text and nothing else: the song title \"{title}\" as large, clearly "
-            "legible typography in the upper third of the cover, and the artist name "
-            f"\"{artist}\" in smaller, matching typography on its own line directly above or below the title "
-            "(still in the upper half – players and libraries overlay the lower edge). Describe font style and color "
-            "of both. Write both exactly as given, letter by letter. No other words, letters, numbers, logos, "
-            "labels or watermarks anywhere.")
+def _text_rule(title, artist, edition, layout=LAYOUTS[0]):
+    texts = [f"the song title \"{title}\" as the dominant cover typography (a display font or custom wordmark that "
+             f"belongs to the design) in the upper third, with {layout}"]
+    if artist:
+        texts.append(f"the artist name \"{artist}\" in smaller, matching typography on its own line directly above "
+                     "or below the title, set like an artist logo on a real release")
+    if edition:
+        texts.append(f"the version tag \"{edition}\" as a bold, high-contrast sticker, badge or banner in a top "
+                     "corner – capital letters about a third of the title's letter height, clearly legible even in a "
+                     "small thumbnail, like the remix label on a single cover")
+    count = ("exactly one piece", "exactly two pieces", "exactly three pieces")[len(texts) - 1]
+    return (f"Render {count} of text and nothing else: " + "; ".join(texts) + ". Keep all text in the upper half "
+            "(players and libraries overlay the lower edge). Describe font style and color of each text. Write "
+            "every text exactly as given, letter by letter. No other words, letters, numbers, logos, record label "
+            "marks, parental advisory labels, barcodes or watermarks anywhere.")
 
 
 def _title_sentence(title):
@@ -167,20 +225,24 @@ def _title_sentence(title):
             "letters that contrast strongly with the background.")
 
 
-def cover_caption(model, title, style, concept, lyrics, artist=""):
+def cover_caption(model, title, style, concept, lyrics, artist="", edition="", sources=(), seed=0):
     if not model:
         raise RuntimeError(t("err.no_model"))
-    caption = llm.chat_text(model, _upsampler_prompt(), cover_request(title, style, concept, lyrics, artist),
+    caption = llm.chat_text(model, _upsampler_prompt(),
+                            cover_request(title, style, concept, lyrics, artist, edition, sources, seed),
                             temperature=0.7)
     caption = caption.strip().strip('"').strip()
     if not caption:
         raise RuntimeError(t("cover.no_caption"))
-    # Das Sprachmodell lässt den Schriftzug gelegentlich weg – ohne Titel in Anführungszeichen malt FLUX keinen.
+    # Das Sprachmodell lässt Schriftzüge gelegentlich weg – ohne Text in Anführungszeichen malt FLUX keinen.
     if f'"{title}"'.lower() not in caption.lower():
         caption += _title_sentence(title)
     if artist and f'"{artist}"'.lower() not in caption.lower():
         caption += (f" Directly below the title, the artist name \"{artist}\" is written in smaller, clearly "
                     "legible letters in the same style.")
+    if edition and f'"{edition}"'.lower() not in caption.lower():
+        caption += (f" In the top right corner, a bold high-contrast badge reads \"{edition}\" in clearly legible "
+                    "capital letters.")
     return caption
 
 
@@ -244,7 +306,7 @@ def make_cover(folder, stem, info, model, seed=None, on_status=None):
     status("prompt")
     artist = cover_artist(info)
     caption = cover_caption(model, title, info.get("style", ""), info.get("concept", ""), info.get("lyrics", ""),
-                            artist)
+                            artist, cover_edition(info), mashup_sources(info), seed)
     llm.unload(model)  # VRAM für FLUX frei machen
 
     status("load")
