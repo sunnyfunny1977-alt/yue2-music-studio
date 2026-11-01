@@ -15,6 +15,19 @@ Quellen: [YuE2 Prompt-Guide (ComfyUI)](https://docs.comfy.org/tutorials/audio/yu
 
 <p align="center"><img src="docs/vorschau2.png" alt="YuE2 Studio – Bibliothek mit Song-Kacheln, Covern und Detailkarte" width="900"></p>
 
+**Mashup** – zwei Songs, Ablauf von Song A, je Teil A (violett) oder B (cyan), Text über den Noten:
+
+<p align="center"><img src="docs/vorschau3.png" alt="YuE2 Studio – Mashup aus „Neon Rain Drive“ und „Letters to the Sea“ mit farbiger Ablaufleiste und Teil-Karten" width="900"></p>
+
+**Einstellungen / Settings** – MP3/FLAC-Qualität und Tags; der Künstlername erscheint auf Wunsch auf dem FLUX-Cover:
+
+<table align="center"><tr>
+<td><img src="docs/vorschau4.png" alt="YuE2 Studio – Export-Einstellungen mit Künstler, Album, Genre und Jahr" width="440"></td>
+<td><img src="docs/cover_beispiel.jpg" alt="FLUX.3-Cover „Neon Rain Drive“ mit Künstlername „Luna Vale“" width="360"></td>
+</tr></table>
+
+<sub>Alle Songs, Künstler und Cover in den Vorschaubildern sind erfunden und mit YuE2 Studio erzeugt.</sub>
+
 ## Beispiel / Example
 
 Ein mit der App erzeugter Song (Modus *Neuer Song*, Ollama `qwen3.8:27b`, YuE2 `cot=full`, 56 s, Rechenzeit 40 s auf einer RTX 5090):
