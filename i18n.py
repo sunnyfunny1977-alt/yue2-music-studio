@@ -239,6 +239,13 @@ STRINGS = {
 
     # ------------------------------------------------------------------ Einstellungen (Export)
     "tab.settings": ("⚙️ Einstellungen", "⚙️ Settings"),
+    "ai.title": ("KI-Modell", "AI model"),
+    "ai.sub": ("Ollama-Modell für Lyrics, Style, Mashup-Texte und Cover-Beschreibungen",
+               "Ollama model for lyrics, style, mashup lyrics and cover descriptions"),
+    "ai.hint": ("Auswahl und Denkmodus werden sofort übernommen und beim nächsten Start wiederhergestellt. "
+                "Im Mashup läuft die KI immer im Denkmodus.",
+                "Model and thinking mode apply right away and are restored on the next start. "
+                "The mashup always uses thinking mode."),
     "exp.title": ("Export-Einstellungen", "Export settings"),
     "exp.sub": ("Gelten für jedes Speichern als MP3 oder FLAC – Qualität und Tags", "Apply to every MP3 or FLAC save – quality and tags"),
     "exp.mp3": ("MP3-Bitrate", "MP3 bitrate"),
@@ -261,9 +268,9 @@ STRINGS = {
     "cover.btn_again": ("🎨 Neues Cover erstellen", "🎨 Create new cover"),
     "cover.save_cb": ("🎨 Cover mit FLUX.3 erzeugen (512 × 512, Titel im Bild)",
                       "🎨 Create cover with FLUX.3 (512 × 512, title in the image)"),
-    "cover.missing": ("Cover-Funktion nicht installiert – optional über <code>install_cover.ps1</code> "
+    "cover.missing": ("Cover-Funktion nicht installiert – optional über <code>install_cover.ps1</code> (Windows) bzw. <code>install_cover.sh</code> (Linux) "
                       "(FLUX.3 Image Klein, ca. 15–20 GB).",
-                      "Cover feature not installed – optional via <code>install_cover.ps1</code> "
+                      "Cover feature not installed – optional via <code>install_cover.ps1</code> (Windows) or <code>install_cover.sh</code> (Linux) "
                       "(FLUX.3 Image Klein, approx. 15–20 GB)."),
     "cover.chip_ok": ("FLUX.3 · {v}", "FLUX.3 · {v}"),
     "cover.chip_off": ("Cover: nicht installiert", "Cover: not installed"),
@@ -431,10 +438,10 @@ STRINGS = {
     "err.audio_read": ("Audio konnte nicht gelesen werden: {e}", "Could not read the audio file: {e}"),
     "err.exists": ("Existiert bereits: {files} – anderen Namen wählen oder „Überschreiben“ aktivieren.",
                    "Already exists: {files} – choose another name or enable “Overwrite”."),
-    "err.sheetsage_env": ("SheetSage2-Umgebung fehlt ({p}). Bitte install.ps1 ausführen.",
-                          "SheetSage2 environment missing ({p}). Please run install.ps1."),
-    "err.sheetsage_model": ("SheetSage2-Modell fehlt ({p}). Bitte install.ps1 ausführen.",
-                            "SheetSage2 model missing ({p}). Please run install.ps1."),
+    "err.sheetsage_env": ("SheetSage2-Umgebung fehlt ({p}). Bitte install.ps1 (Windows) bzw. install.sh (Linux) ausführen.",
+                          "SheetSage2 environment missing ({p}). Please run install.ps1 (Windows) or install.sh (Linux)."),
+    "err.sheetsage_model": ("SheetSage2-Modell fehlt ({p}). Bitte install.ps1 (Windows) bzw. install.sh (Linux) ausführen.",
+                            "SheetSage2 model missing ({p}). Please run install.ps1 (Windows) or install.sh (Linux)."),
     "err.sheetsage_noresult": ("SheetSage2 lieferte kein Ergebnis (Exit {code}):\n{err}",
                                "SheetSage2 returned no result (exit {code}):\n{err}"),
     "err.melody_failed": ("Melodie-Transkription fehlgeschlagen: {e}", "Melody transcription failed: {e}"),

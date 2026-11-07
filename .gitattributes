@@ -1,0 +1,2 @@
+# Shell-Skripte immer mit Unix-Zeilenenden (auch beim Auschecken unter Windows)
+*.sh text eol=lf

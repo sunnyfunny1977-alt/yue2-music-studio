@@ -1,5 +1,6 @@
 """Lädt config.json und löst relative Pfade gegen den Projektordner auf."""
 import json
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -12,6 +13,10 @@ with (ROOT / "config.json").open(encoding="utf-8") as f:
 def path(key):
     """Pfad aus der Konfiguration; relative Angaben gelten ab dem Projektordner."""
     p = Path(CONFIG[key])
+    # config.json nennt die Interpreter der Umgebungen im Windows-Format (.venv-x/Scripts/python.exe);
+    # unter Linux liegen sie in .venv-x/bin/python.
+    if os.name != "nt" and p.name.lower() == "python.exe" and p.parent.name == "Scripts":
+        p = p.parent.parent / "bin" / "python"
     return p if p.is_absolute() else ROOT / p
 
 

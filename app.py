@@ -7,8 +7,13 @@ import shutil
 import tempfile
 import threading
 import time
+import warnings
 from datetime import datetime
 from pathlib import Path
+
+# Gradio 5.50 kündigt Änderungen für Gradio 6 an (theme/css/js/head an launch(), api_visibility), bietet die
+# neuen Parameter aber noch nicht an. requirements-app.txt bleibt bei gradio<6 – die Hinweise nur ausblenden.
+warnings.filterwarnings("ignore", message=r".*Gradio 6\.0", category=DeprecationWarning)
 
 # Temporäre Dateien (Vorschau-Audio) landen in einem eigenen Ordner, der beim Beenden gelöscht wird.
 TEMP_DIR = Path(tempfile.mkdtemp(prefix="yue2_app_"))
@@ -119,7 +124,8 @@ def model_choices():
         models = llm.list_models()
     except llm.OllamaError:
         return [], None, False, t("chip.ollama_err")
-    default = CONFIG["ollama_default_model"]
+    saved = settings.load_user().get("ollama_model")
+    default = saved if saved in models else CONFIG["ollama_default_model"]
     value = default if default in models else (models[0] if models else None)
     return models, value, True, t("chip.ollama_ok", n=len(models))
 
@@ -128,6 +134,20 @@ def hero_html():
     _, _, ok, text = model_choices()
     gpu_text, gpu_ok = gpu_status()
     return ui.hero(ok, text, gpu_text, gpu_ok, gpu_info.current().low_vram, cover.chip_text(), cover.available())
+
+
+def think_default():
+    saved = settings.load_user().get("ollama_think")
+    return bool(CONFIG.get("ollama_think", True) if saved is None else saved)
+
+
+def remember_model(model):
+    if model:
+        settings.save_user(ollama_model=model)
+
+
+def remember_think(think):
+    settings.save_user(ollama_think=bool(think))
 
 
 def refresh_models():
@@ -185,9 +205,10 @@ def create_new(idea, language_code, second_code, mix_use, target_secs, model, th
 def load_source_info(audio_file):
     """Liest beim Laden eines Songs Titel, Interpret, Album, Cover usw. aus den Tags (MP3, FLAC, M4A …).
 
-    Belegt außerdem die Felder der Online-Lyrics-Suche vor und setzt eine frühere Lyrics-Übernahme zurück.
+    Belegt außerdem die Felder der Online-Lyrics-Suche vor und setzt eine frühere Lyrics-Übernahme sowie die
+    Partitur des vorigen Songs zurück.
     """
-    reset = (gr.update(choices=[], value=None), None, None)
+    reset = (gr.update(choices=[], value=None), None, None, "")
     if not audio_file:
         return ("", None, gr.update(), gr.update()) + reset
     from audio_utils import read_tags
@@ -265,6 +286,15 @@ def analyze_remake(audio_file, current_text, lyrics_source):
     duration = len(load_mono(audio_file, 8000)) / 8000
     yield (abc, text, ui.notice("ok", t("remake.done", dur=fmt_duration(duration)), t("remake.done_sub") + note),
            gr.update(value=min(600, int(duration) + 30)), duration)
+
+
+def ensure_analysis(audio_file, current_text, lyrics_source, abc):
+    """Vor „Lyrics & Style erstellen“ im Remake: Fehlt die Partitur noch, wird der Song zuerst analysiert."""
+    if (abc or "").strip():
+        keep = gr.update()
+        yield keep, keep, keep, keep, keep
+        return
+    yield from analyze_remake(audio_file, current_text, lyrics_source)
 
 
 def create_remake(transcript, lyrics_mode, target_lang_code, second_code, mix_use, style_wish, abc, model,
@@ -940,13 +970,6 @@ def build_ui():
                            value=lambda: ui.step(1, "step1.title", "step1.sub"))
                         mode = tr(gr.Radio(mode_choices(), value=MODE_NEW, show_label=False, container=False,
                                            elem_id="mode-switch", elem_classes="seg"), choices=mode_choices)
-                        with gr.Row(equal_height=True, elem_classes="model-row"):
-                            model_dd = tr(gr.Dropdown(models, value=model_value, label=t("model.label"),
-                                                      scale=5, min_width=160, elem_id="model-dd"),
-                                          label="model.label")
-                            refresh_btn = gr.Button("↻", scale=0, min_width=40, size="sm", elem_classes="icon-btn")
-                        think = tr(gr.Checkbox(value=bool(CONFIG.get("ollama_think", True)), label=t("think.label"),
-                                               container=False, elem_id="think-cb"), label="think.label")
 
                         # --- Neuer Song
                         with gr.Column(visible=True) as new_group:
@@ -1189,7 +1212,7 @@ def build_ui():
             with gr.Row(equal_height=False, elem_id="lib-row"):
                 with gr.Column(scale=7, min_width=380):
                     with gr.Column(elem_classes="card"):
-                        tr(gr.HTML(ui.step(5, "lib.title", "lib.sub")), value=lambda: ui.step(5, "lib.title", "lib.sub"))
+                        tr(gr.HTML(ui.step(None, "lib.title", "lib.sub")), value=lambda: ui.step(None, "lib.title", "lib.sub"))
                         with gr.Row(equal_height=True, elem_classes="lib-tools"):
                             lib_query = tr(gr.Textbox(label=t("lib.search"), placeholder=t("lib.search_ph"), max_lines=1,
                                                       scale=4, min_width=160), label="lib.search", placeholder="lib.search_ph")
@@ -1242,7 +1265,7 @@ def build_ui():
             export = settings.export_settings()
             with gr.Row(equal_height=False, elem_id="settings-row"):
                 with gr.Column(elem_classes="card", scale=1, min_width=340):
-                    tr(gr.HTML(ui.step(6, "exp.title", "exp.sub")), value=lambda: ui.step(6, "exp.title", "exp.sub"))
+                    tr(gr.HTML(ui.step(None, "exp.title", "exp.sub")), value=lambda: ui.step(None, "exp.title", "exp.sub"))
                     exp_mp3 = tr(gr.Dropdown(mp3_choices(), value=str(export["mp3_bitrate"]), label=t("exp.mp3")),
                                  choices=mp3_choices, label="exp.mp3")
                     exp_flac = tr(gr.Radio([("16 Bit", 16), ("24 Bit", 24)], value=int(export["flac_bits"]),
@@ -1263,8 +1286,16 @@ def build_ui():
                                          label="exp.comment")
                     exp_save = tr(gr.Button(t("exp.save"), variant="primary", elem_classes="create-btn"), value="exp.save")
                     exp_status = gr.HTML(elem_classes="html-slot")
-                with gr.Column(scale=1, min_width=10):
-                    pass
+                with gr.Column(elem_classes="card", scale=1, min_width=340):
+                    tr(gr.HTML(ui.step(None, "ai.title", "ai.sub")), value=lambda: ui.step(None, "ai.title", "ai.sub"))
+                    with gr.Row(equal_height=True, elem_classes="model-row"):
+                        model_dd = tr(gr.Dropdown(models, value=model_value, label=t("model.label"),
+                                                  scale=5, min_width=160, elem_id="model-dd"),
+                                      label="model.label")
+                        refresh_btn = gr.Button("↻", scale=0, min_width=40, size="sm", elem_classes="icon-btn")
+                    think = tr(gr.Checkbox(value=think_default(), label=t("think.label"),
+                                           container=False, elem_id="think-cb"), label="think.label")
+                    tr(gr.HTML(), value=lambda: f'<div class="lyr-hint">{ui.esc(t("ai.hint"))}</div>')
 
 
         # --- Sprache anwenden: alle registrierten Texte plus dynamische Inhalte neu erzeugen
@@ -1322,6 +1353,8 @@ def build_ui():
 
         # --- Events
         refresh_btn.click(refresh_models, outputs=[model_dd, hero])
+        model_dd.input(remember_model, inputs=model_dd)
+        think.input(remember_think, inputs=think)
         mode.change(lambda m: (gr.update(visible=m == MODE_NEW), gr.update(visible=m == MODE_REMAKE)),
                     inputs=mode, outputs=[new_group, remake_group])
         song_out = [title, style, lyrics, language_state, lint_box, save_name, max_secs, concept]
@@ -1330,14 +1363,17 @@ def build_ui():
         language2.change(mix_changed, inputs=language2, outputs=mix_use, show_progress="hidden")
         remake_lang2.change(mix_changed, inputs=remake_lang2, outputs=remake_mix, show_progress="hidden")
         source.change(load_source_info, inputs=source,
-                      outputs=[track_box, source_info, lyr_title, lyr_artist, lyr_choice, lyric_results, lyrics_source],
+                      outputs=[track_box, source_info, lyr_title, lyr_artist, lyr_choice, lyric_results, lyrics_source,
+                               abc],
                       show_progress="hidden")
         lyr_search_btn.click(search_lyrics, inputs=[lyr_title, lyr_artist, source_info],
                              outputs=[lyr_choice, lyric_results, lyr_status])
         lyr_use_btn.click(use_lyrics, inputs=[lyr_choice, lyric_results], outputs=[transcript, lyrics_source, lyr_status])
         analyze_btn.click(analyze_remake, inputs=[source, transcript, lyrics_source],
                           outputs=[abc, transcript, remake_status, max_secs, src_duration], show_progress="hidden")
-        create_remake_btn.click(create_remake,
+        create_remake_btn.click(ensure_analysis, inputs=[source, transcript, lyrics_source, abc],
+                                outputs=[abc, transcript, remake_status, max_secs, src_duration], show_progress="hidden"
+                                ).success(create_remake,
                                 inputs=[transcript, lyrics_mode, remake_lang, remake_lang2, remake_mix, style_wish, abc, model_dd, src_duration,
                                         lyrics_source, think],
                                 outputs=song_out)

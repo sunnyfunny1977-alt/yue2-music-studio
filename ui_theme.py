@@ -445,8 +445,10 @@ def track_head(track):
 
 
 def step(num, title_key, sub_key=""):
+    """Kartenkopf; num=None lässt die Nummer weg (Reiter ohne Arbeitsschritte wie Bibliothek, Einstellungen)."""
     sub = t(sub_key) if sub_key else ""
-    return (f'<div class="step"><div class="step-num">{num:02d}</div><div>'
+    badge = f'<div class="step-num">{num:02d}</div>' if num is not None else ""
+    return (f'<div class="step">{badge}<div>'
             f'<div class="step-title">{esc(t(title_key))}</div><div class="step-sub">{esc(sub)}</div></div></div>')
 
 

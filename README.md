@@ -6,7 +6,7 @@
 Lokale Gradio-App für das KI-Musikmodell **YuE2** (`m-a-p/YuE2-3B`).
 Lyrics und Style-Prompt erzeugt ein lokales Ollama-Modell über einen Masterprompt. Beides lässt sich danach von Hand oder per KI korrigieren.
 
-> **English:** A local Gradio app (German/English UI) for the AI music model YuE2. A local Ollama model writes the lyrics and style prompt from your idea via a master prompt, and you can refine them by hand or ask the AI to correct them. *New song* turns an idea into a full song, optionally bilingual (e.g. German verses with an Arabic chorus). *Remake* transcribes the melody of an uploaded song (SheetSage2) and its vocals (Whisper), then sings new or translated lyrics on the original melody in a new style. Songs are only saved on request, as MP3 or FLAC, together with an info TXT file. Windows · NVIDIA GPU or AMD Radeon GPU (ROCm, untested on real hardware) with ≥ 24 GB VRAM, 16 GB cards in an experimental low-VRAM mode · see *Installation* below (`install.ps1` detects your GPU, then `start.bat`).
+> **English:** A local Gradio app (German/English UI) for the AI music model YuE2. A local Ollama model writes the lyrics and style prompt from your idea via a master prompt, and you can refine them by hand or ask the AI to correct them. *New song* turns an idea into a full song, optionally bilingual (e.g. German verses with an Arabic chorus). *Remake* transcribes the melody of an uploaded song (SheetSage2) and its vocals (Whisper), then sings new or translated lyrics on the original melody in a new style. Songs are only saved on request, as MP3 or FLAC, together with an info TXT file. Windows · NVIDIA GPU or AMD Radeon GPU (ROCm, untested on real hardware) with ≥ 24 GB VRAM, 16 GB cards in an experimental low-VRAM mode · see *Installation* below (`install.ps1` detects your GPU, then `start.bat`). Linux with an NVIDIA GPU: `./install.sh`, then `./start.sh` (driver 570+, not yet tested on real Linux hardware).
 
 Quellen: [YuE2 Prompt-Guide (ComfyUI)](https://docs.comfy.org/tutorials/audio/yue2/yue2) · [YuE GitHub](https://github.com/multimodal-art-projection/YuE)
 
@@ -45,14 +45,15 @@ Ein mit der App erzeugter Song (Modus *Neuer Song*, Ollama `qwen3.8:27b`, YuE2 `
 > **Style:** `German, relaxed male vocal, reggae, chill, lazy, 75 BPM, clean electric guitar skank, upright bass, muted drums, warm organ, laid-back groove`
 
 ## Voraussetzungen
-- **NVIDIA:** Windows 10/11, GPU mit BF16 und ≥ 24 GB VRAM (getestet: RTX 5090)
+- **NVIDIA:** Windows 10/11 oder Linux (x86_64), GPU mit BF16 und ≥ 24 GB VRAM (getestet: RTX 5090 unter Windows). Unter Linux: NVIDIA-Treiber 570 oder neuer.
 - **AMD Radeon:** Windows 11, Radeon RX 7000/9000, Radeon AI PRO R9700 oder PRO W7800/W7900, Treiber Adrenalin 26.2.2 oder neuer. Details im Abschnitt [AMD Radeon](#amd-radeon).
 - 16-GB-Karten beider Hersteller laufen in einem **experimentellen Sparmodus**.
-- [uv](https://docs.astral.sh/uv/), [ffmpeg](https://www.gyan.dev/ffmpeg/builds/) im PATH, git
+- [uv](https://docs.astral.sh/uv/), [ffmpeg](https://www.gyan.dev/ffmpeg/builds/) im PATH, git (Linux: `ffmpeg` und `git` aus der Paketverwaltung, uv per `curl -LsSf https://astral.sh/uv/install.sh | sh`)
 - [Ollama](https://ollama.com) mit mindestens einem Modell, z. B. `ollama pull qwen3.8:27b`
 - ca. 25 GB freier Speicher für Umgebungen und Modelle
 
 ## Installation
+**Windows:**
 ```powershell
 powershell -ExecutionPolicy Bypass -File install.ps1
 ```
@@ -76,8 +77,19 @@ Optionen:
 - `-SkipModels`: Modelle erst beim ersten Start laden
 - `-DryRun`: nur anzeigen, was installiert würde
 
+**Linux (NVIDIA):**
+```bash
+./install.sh
+```
+`install.sh` prüft System, Werkzeuge (uv, git, ffmpeg, Ollama) und NVIDIA-Treiber und legt dieselben zwei Umgebungen an wie unter Windows (Torch 2.10 bzw. 2.8 mit CUDA 12.8). Fehlt etwas, nennt er den passenden Installationsbefehl für die Distribution (apt, dnf, pacman, zypper). Optionen: `--skip-sheetsage`, `--skip-models`, `--dry-run`, `--help`.
+
+> ⚠️ **Status Linux:** Der Installer ist per Probelauf und Shellcheck geprüft. **Auf einem echten Linux-System wurde er noch nicht getestet.** Rückmeldungen gerne als [Issue](https://github.com/sunnyfunny1977-alt/yue2-music-studio/issues). AMD-Karten werden unter Linux noch nicht unterstützt.
+
 ## Start
-`start.bat` doppelklicken. Danach öffnet sich http://127.0.0.1:7860.
+- **Windows:** `start.bat` doppelklicken.
+- **Linux:** `./start.sh` im Projektordner ausführen.
+
+Danach öffnet sich http://127.0.0.1:7860. Läuft die App auf einem Rechner ohne Bildschirm, erreichst du sie per SSH-Tunnel: `ssh -L 7860:127.0.0.1:7860 <rechner>` und dann http://127.0.0.1:7860 im eigenen Browser.
 
 ## Sprache / Language
 Die Oberfläche gibt es auf **Deutsch** und **Englisch**.
@@ -109,13 +121,14 @@ Im Reiter **„🎚️ Mashup“** entsteht aus zwei Songs ein neues Lied:
 5. Texte direkt bearbeiten, Teile umschalten (der Text des Teils wird als veraltet markiert, **„Text für geänderte Teile neu erzeugen“** schreibt nur diese neu) oder per **Korrekturwunsch** von der KI anpassen lassen.
 6. **„Ins Studio übernehmen“** – Noten, Text und Style landen im Studio; dort wie gewohnt generieren, speichern und Cover erstellen. Die Info-TXT vermerkt beide Quellen, die Angleichung von Song B und den Ablauf; die Bibliothek zeigt den Song als „Mashup“ und kann ihn per „Alles übernehmen“ erneut generieren.
 
-## Einstellungen (Export)
-Im Reiter **„⚙️ Einstellungen“** legst du fest, wie Songs gespeichert werden (dauerhaft in `user_settings.json`):
+## Einstellungen (KI-Modell und Export)
+Im Reiter **„⚙️ Einstellungen“** wählst du das KI-Modell und legst fest, wie Songs gespeichert werden (dauerhaft in `user_settings.json`):
+- **KI-Modell (Ollama)** mit ↻ zum Neuladen der Liste und **🧠 Denkmodus**: gelten für Lyrics, Style, Korrekturen, Mashup-Texte und Cover-Beschreibungen. Beides wird sofort übernommen und beim nächsten Start wiederhergestellt.
 - **MP3-Bitrate**: 128, 192, 256, 320 kbit/s oder VBR V0 · **FLAC-Bittiefe**: 16 oder 24 Bit
 - **Tags**: Künstler, Album, Genre, Jahr, Kommentar – werden in MP3 und FLAC geschrieben und in der Info-TXT vermerkt.
 - **Künstlername aufs Cover**: Ist ein Künstler gesetzt, malt FLUX.3 ihn zusätzlich zum Titel ins Cover (kleiner, direkt unter oder über dem Titel).
 
-> **English:** The **Mashup** tab combines two songs: song A sets arrangement, key and tempo; for each section you choose whether melody and words come from A or B (colour-coded: A violet, B cyan; song B is transposed and time-matched automatically). Each section card shows its lyrics above the rendered vocal notes. The AI (always in thinking mode) writes the mashup lyrics from both originals with typical mashup transitions; you can edit them, switch sections and rewrite only the changed ones, or request corrections. *Send to studio* hands notes, lyrics and style to the studio for generating and saving. The **Settings** tab sets MP3 bitrate (128–320 kbps or V0), FLAC bit depth (16/24) and tags (artist, album, genre, year, comment); a set artist name is also painted onto FLUX covers.
+> **English:** The **Mashup** tab combines two songs: song A sets arrangement, key and tempo; for each section you choose whether melody and words come from A or B (colour-coded: A violet, B cyan; song B is transposed and time-matched automatically). Each section card shows its lyrics above the rendered vocal notes. The AI (always in thinking mode) writes the mashup lyrics from both originals with typical mashup transitions; you can edit them, switch sections and rewrite only the changed ones, or request corrections. *Send to studio* hands notes, lyrics and style to the studio for generating and saving. The **Settings** tab holds the Ollama model selection and the thinking-mode switch (both remembered across restarts) and sets MP3 bitrate (128–320 kbps or V0), FLAC bit depth (16/24) and tags (artist, album, genre, year, comment); a set artist name is also painted onto FLUX covers.
 
 ## Bibliothek
 Der Reiter **„📚 Bibliothek“** zeigt alle gespeicherten Songs als Kacheln: Cover (oder ein Platzhalter mit dem Titel), darunter Titel, Länge, Genre und Tempo. Erfasst werden der Standard-Ausgabeordner und jeder Ordner, in den du schon gespeichert hast. Suche (Titel, Style, Lyrics) und Sortierung (neueste, Titel, Länge) helfen beim Finden.
@@ -135,6 +148,7 @@ FLUX.3 läuft komplett innerhalb von YuE2 Music Studio – in einer eigenen Umge
 ```powershell
 powershell -ExecutionPolicy Bypass -File install_cover.ps1
 ```
+Unter Linux (NVIDIA): `./install_cover.sh` (Optionen `--variant fp8r|bf16`, `--skip-model`, `--dry-run`).
 - Download: ca. **15,5 GB** (fp8-Variante, Standard) aus `unsloth/flux-3-image-klein` (Spiegel des offiziellen Repos, ohne Login). `-Variant bf16` lädt den größeren bf16-Transformer (ca. 20 GB gesamt).
 - RTX 5090: ein Cover dauert etwa 35 s (davon ~20 s für die Bildbeschreibung durch Ollama), VRAM-Spitze ca. 17 GB. Danach gibt FLUX den Grafikspeicher sofort wieder frei, das Modell bleibt für weitere Cover im Arbeitsspeicher; **„🧹 VRAM freigeben“** beendet es ganz.
 - Karten unter 22 GB VRAM nutzen automatisch CPU-Offload (langsamer, nicht getestet). AMD/ROCm: experimentell, nicht auf echter Hardware getestet.
@@ -156,15 +170,15 @@ Die Masterprompts arbeiten wie ein erfahrener Musikproduzent („YuE2 Song Archi
 - **Qualitätskontrolle:** Vor der Antwort prüft das Modell Reime, Singbarkeit, Länge und alle Vorgaben.
 - **Gezielte Korrektur:** „Mit KI korrigieren“ ändert nur das Betroffene und übersetzt Problembeschreibungen in konkrete Änderungen („zu langsam“ → höheres BPM, „Stimme geht unter“ → präsentere Stimme).
 
-**🧠 Denkmodus** (Schalter unter der Modus-Leiste, standardmäßig an): Denkfähige Modelle wie Qwen überlegen vor der Antwort. Die Reime werden deutlich besser, dafür dauert es etwa dreimal so lange (getestet mit `qwen3.8:27b`: ca. 1–3 min statt 25 s). Modelle ohne Denkmodus laufen unverändert.
+**🧠 Denkmodus** (Schalter im Reiter „⚙️ Einstellungen“, standardmäßig an): Denkfähige Modelle wie Qwen überlegen vor der Antwort. Die Reime werden deutlich besser, dafür dauert es etwa dreimal so lange (getestet mit `qwen3.8:27b`: ca. 1–3 min statt 25 s). Modelle ohne Denkmodus laufen unverändert.
 
 Kernregeln nach dem YuE2-Guide: Der **Style** ist eine kommagetrennte Liste in der Reihenfolge *Sprache → Stimme → Genre → Stimmung → BPM → Instrumente → Produktion*. Die **Lyrics** enthalten nur gesungene Wörter mit den Tags `[Intro] [Verse] [Pre-Chorus] [Chorus] [Bridge] [Interlude] [Outro]`. Musikalische Anweisungen stehen nie in den Lyrics.
 
 ## Einstellungen (`config.json`)
 | Schlüssel | Bedeutung |
 |---|---|
-| `ollama_default_model` | vorausgewähltes Ollama-Modell |
-| `ollama_think` | Denkmodus beim Start an (`true`) oder aus (`false`) |
+| `ollama_default_model` | vorausgewähltes Ollama-Modell, solange im Reiter „Einstellungen“ keines gewählt wurde |
+| `ollama_think` | Denkmodus an (`true`) oder aus (`false`), solange er im Reiter „Einstellungen“ nicht umgeschaltet wurde |
 | `flux_model_dir`, `flux_python` | Ort des FLUX.3-Modells und der FLUX-Umgebung (legt `install_cover.ps1` an) |
 | `flux_variant` | `auto` (vorhandene Variante, fp8 bevorzugt), `fp8r` oder `bf16` |
 | `cover_steps`, `cover_render_size`, `cover_size` | Schritte (16), Render-Größe (1024) und Endgröße des Covers (512) |
